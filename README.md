@@ -6,7 +6,7 @@
 
 **9 hands-on modules · ~15 minutes · zero setup**
 
-[**Launch the app**](#) · [Report a bug](../../issues) · [License](#license)
+[**Launch the app →**](https://mrg-hazmatz.github.io/dplearn/) · [Report a bug](../../issues) · [License](#license)
 
 ---
 
