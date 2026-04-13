@@ -1,0 +1,15 @@
+# Claude Code config (dev-only, not needed for the app)
+.claude/
+
+# OS junk
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Editor files
+*.swp
+*.swo
+*~
+
+# Original reference file
+dplearn_v6_original.html

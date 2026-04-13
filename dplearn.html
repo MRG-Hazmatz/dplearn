@@ -1,0 +1,3977 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0b1220">
+<meta name="description" content="DPlearn — an interactive course on differential privacy. Real breaches, live demos, hands-on experiments.">
+<title>DPlearn — Interactive Differential Privacy Course</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+<script crossorigin src="https://unpkg.com/react@18.2.0/umd/react.production.min.js"></script>
+<script crossorigin src="https://unpkg.com/react-dom@18.2.0/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/@babel/standalone@7.23.5/babel.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/topojson/3.0.2/topojson.min.js"></script>
+
+<style>
+/* ─── Reset & Base ─────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body {
+  font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  background: #0b1220;
+  color: #e2e8f0;
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  font-feature-settings: 'cv11', 'ss01';
+  overflow-x: hidden;
+}
+button, input, select { font: inherit; color: inherit; }
+button { cursor: pointer; background: none; border: none; }
+button:disabled { cursor: not-allowed; }
+a { color: inherit; text-decoration: none; }
+svg { display: block; }
+
+/* ─── Background Decoration ────────────────────────────────────── */
+.bg-wrap {
+  position: fixed; inset: 0; z-index: -1; pointer-events: none; overflow: hidden;
+}
+.bg-wrap::before {
+  content: ''; position: absolute;
+  top: -30%; left: -20%; width: 70%; height: 80%;
+  background: radial-gradient(circle, #2563eb18 0%, transparent 65%);
+  filter: blur(40px);
+}
+.bg-wrap::after {
+  content: ''; position: absolute;
+  bottom: -30%; right: -20%; width: 70%; height: 80%;
+  background: radial-gradient(circle, #7c3aed12 0%, transparent 65%);
+  filter: blur(40px);
+}
+
+/* ─── Scrollbars ───────────────────────────────────────────────── */
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: #0b1220; }
+::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 10px; border: 2px solid #0b1220; }
+::-webkit-scrollbar-thumb:hover { background: #334155; }
+
+/* ─── Focus States ─────────────────────────────────────────────── */
+button:focus-visible, input:focus-visible, select:focus-visible, [role="button"]:focus-visible {
+  outline: 2px solid #60a5fa;
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* ─── Keyframes ────────────────────────────────────────────────── */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes slideInRight {
+  from { opacity: 0; transform: translateX(16px); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes slideInLeft {
+  from { opacity: 0; transform: translateX(-16px); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+@keyframes coinFlip {
+  0% { transform: rotateY(0deg); }
+  100% { transform: rotateY(1080deg); }
+}
+@keyframes matchGlow {
+  0%, 100% { background: transparent; }
+  50% { background: #d9770630; }
+}
+@keyframes heartbeat {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.04); }
+}
+.glossary-grid { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+@media (max-width: 780px) { .glossary-grid { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; } }
+@media (max-width: 500px) { .glossary-grid { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; } }
+@keyframes confetti {
+  0% { transform: translateY(-8px) rotate(0deg); opacity: 1; }
+  100% { transform: translateY(180px) rotate(360deg); opacity: 0; }
+}
+@keyframes star {
+  0% { transform: translateY(-8px) rotate(0deg) scale(1); opacity: 1; }
+  100% { transform: translateY(150px) rotate(540deg) scale(0.6); opacity: 0; }
+}
+@keyframes sadDrop {
+  0% { transform: translateY(-8px) scale(0.9); opacity: 1; }
+  100% { transform: translateY(160px) scale(1.3); opacity: 0; }
+}
+@keyframes packetFly {
+  0% { top: 8%; opacity: 0; }
+  10% { opacity: 1; }
+  90% { opacity: 1; }
+  100% { top: 88%; opacity: 0; }
+}
+@keyframes glowPulse {
+  0%, 100% { box-shadow: 0 0 0 0 currentColor; }
+  50% { box-shadow: 0 0 0 6px transparent; }
+}
+
+/* ─── Utility Classes ──────────────────────────────────────────── */
+.fade-up { animation: fadeUp 0.45s cubic-bezier(.2,.9,.3,1.2) both; }
+.fade-in { animation: fadeIn 0.35s ease both; }
+.slide-right { animation: slideInRight 0.4s ease both; }
+.slide-left { animation: slideInLeft 0.4s ease both; }
+
+.mono { font-family: 'JetBrains Mono', ui-monospace, 'SF Mono', Consolas, monospace; }
+.syne { font-family: 'Syne', 'DM Sans', sans-serif; letter-spacing: -0.02em; }
+
+.range-slider {
+  -webkit-appearance: none; appearance: none;
+  width: 100%; height: 6px; border-radius: 3px;
+  background: #1e293b; outline: none;
+  transition: background 0.2s;
+}
+.range-slider::-webkit-slider-thumb {
+  -webkit-appearance: none; appearance: none;
+  width: 20px; height: 20px; border-radius: 50%;
+  background: #2563eb; cursor: pointer;
+  border: 3px solid #0b1220;
+  box-shadow: 0 2px 8px #2563eb55;
+  transition: all 0.15s;
+}
+.range-slider::-webkit-slider-thumb:hover { transform: scale(1.15); box-shadow: 0 2px 14px #2563eb88; }
+.range-slider::-moz-range-thumb {
+  width: 20px; height: 20px; border-radius: 50%;
+  background: #2563eb; cursor: pointer; border: 3px solid #0b1220;
+  box-shadow: 0 2px 8px #2563eb55;
+}
+
+/* ─── Responsive ───────────────────────────────────────────────── */
+@media (max-width: 720px) {
+  .hide-mobile { display: none !important; }
+}
+@media (min-width: 721px) {
+  .show-mobile { display: none !important; }
+}
+
+/* ─── Loading State ────────────────────────────────────────────── */
+.loading-shell {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  min-height: 100vh; gap: 1rem; color: #64748b;
+  font-family: 'DM Sans', sans-serif;
+}
+.loading-shell .spinner {
+  width: 40px; height: 40px; border-radius: 50%;
+  border: 3px solid #1e293b; border-top-color: #2563eb;
+  animation: spin 0.8s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+</style>
+</head>
+<body>
+<div class="bg-wrap"></div>
+<div id="root">
+  <div class="loading-shell">
+    <div class="spinner"></div>
+    <div>Loading DPlearn...</div>
+  </div>
+</div>
+
+<script type="text/babel" data-presets="env,react">
+/* ═══════════════════════════════════════════════════════════════════
+   DPlearn — Interactive Differential Privacy Course
+   Single-file React app (via Babel Standalone + CDN)
+   ═══════════════════════════════════════════════════════════════════ */
+
+const { useState, useEffect, useRef, useMemo, useCallback, Fragment } = React;
+
+/* ─── Color Tokens ────────────────────────────────────────────── */
+const C = {
+  blue:   '#3b82f6',
+  red:    '#ef4444',
+  green:  '#22c55e',
+  amber:  '#f59e0b',
+  purple: '#a855f7',
+  teal:   '#14b8a6',
+  orange: '#f97316',
+  gray:   '#94a3b8',
+  bg:     '#0b1220',
+  panel:  '#111a2e',
+  panel2: '#1a2540',
+  border: '#1e293b',
+  text:   '#e2e8f0',
+  mute:   '#94a3b8',
+};
+
+const COMPANY_COLORS = {
+  Google:    '#d4a017',
+  Apple:     '#e85d5d',
+  LinkedIn:  '#0a66c2',
+  Uber:      '#64748b',
+  Microsoft: '#22c55e',
+};
+
+/* ─── Utilities ────────────────────────────────────────────────── */
+// Laplace noise generator: inverse CDF method
+function laplace(scale) {
+  const u = Math.random() - 0.5;
+  if (Math.abs(u) < 1e-9) return 0;
+  return -Math.sign(u) * scale * Math.log(1 - 2 * Math.abs(u));
+}
+
+// Clamp helper
+const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
+
+// Deterministic-ish pseudo-random using a seed (for stable visuals)
+function seededRandom(seed) {
+  let s = seed;
+  return () => {
+    s = (s * 9301 + 49297) % 233280;
+    return s / 233280;
+  };
+}
+
+/* ─── Primitive Components ─────────────────────────────────────── */
+
+function Button({ children, onClick, color = C.blue, ghost, small, disabled, icon, fullWidth, type = 'button' }) {
+  const [hover, setHover] = useState(false);
+  const base = {
+    display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+    padding: small ? '6px 14px' : '11px 22px',
+    borderRadius: 10,
+    fontSize: small ? 12 : 14,
+    fontWeight: 600,
+    fontFamily: 'inherit',
+    border: ghost ? `1.5px solid ${color}` : 'none',
+    background: disabled ? '#1e293b' : ghost ? (hover ? color + '18' : 'transparent') : (hover ? color : color + 'dd'),
+    color: disabled ? '#64748b' : ghost ? color : '#fff',
+    cursor: disabled ? 'not-allowed' : 'pointer',
+    transition: 'all 0.18s cubic-bezier(.2,.9,.3,1.2)',
+    opacity: disabled ? 0.55 : 1,
+    boxShadow: !ghost && !disabled ? (hover ? `0 6px 20px ${color}55` : `0 2px 8px ${color}22`) : 'none',
+    transform: hover && !disabled ? 'translateY(-1px)' : 'none',
+    width: fullWidth ? '100%' : 'auto',
+    lineHeight: 1.4,
+    letterSpacing: '0.01em',
+  };
+  return (
+    <button
+      type={type}
+      onClick={onClick}
+      disabled={disabled}
+      onMouseEnter={() => setHover(true)}
+      onMouseLeave={() => setHover(false)}
+      style={base}
+    >
+      {icon}
+      {children}
+    </button>
+  );
+}
+
+function Tag({ children, color = C.blue, size = 'sm' }) {
+  return (
+    <span
+      className="mono"
+      style={{
+        display: 'inline-block',
+        fontSize: size === 'sm' ? 10 : 11,
+        fontWeight: 600,
+        padding: '3px 9px',
+        borderRadius: 5,
+        letterSpacing: '0.08em',
+        background: color + '22',
+        color,
+        border: `1px solid ${color}44`,
+        textTransform: 'uppercase',
+      }}
+    >
+      {children}
+    </span>
+  );
+}
+
+function Card({ children, style = {}, className = '', onClick, hoverable }) {
+  const [hover, setHover] = useState(false);
+  return (
+    <div
+      className={className}
+      onClick={onClick}
+      onMouseEnter={hoverable ? () => setHover(true) : undefined}
+      onMouseLeave={hoverable ? () => setHover(false) : undefined}
+      style={{
+        background: 'linear-gradient(180deg, #121c33 0%, #0f1828 100%)',
+        border: `1px solid ${hover ? '#334155' : '#1e293b'}`,
+        borderRadius: 14,
+        padding: '16px 20px',
+        transition: 'all 0.2s',
+        transform: hover && hoverable ? 'translateY(-2px)' : 'none',
+        boxShadow: hover && hoverable ? '0 8px 24px rgba(0,0,0,0.3)' : '0 2px 8px rgba(0,0,0,0.15)',
+        ...style,
+      }}
+    >
+      {children}
+    </div>
+  );
+}
+
+function Meter({ label, pct, color, animate = true }) {
+  return (
+    <div style={{ marginBottom: 12, width: '100%' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 5 }}>
+        <span className="mono" style={{ fontSize: 10, color: C.mute, letterSpacing: '0.08em' }}>{label}</span>
+        <span className="mono" style={{ fontSize: 10, color, fontWeight: 600 }}>{pct}%</span>
+      </div>
+      <div style={{ background: '#1e293b', borderRadius: 4, height: 6, overflow: 'hidden' }}>
+        <div style={{
+          height: '100%',
+          width: pct + '%',
+          background: `linear-gradient(90deg, ${color}aa, ${color})`,
+          transition: animate ? 'width 0.4s cubic-bezier(.2,.9,.3,1.2), background 0.3s' : 'none',
+          borderRadius: 4,
+          boxShadow: `0 0 8px ${color}55`,
+        }} />
+      </div>
+    </div>
+  );
+}
+
+function ModuleHeader({ tagLabel, tagColor, title, subtitle }) {
+  return (
+    <div style={{ marginBottom: 20 }}>
+      <div style={{ marginBottom: 8 }}>
+        <Tag color={tagColor}>{tagLabel}</Tag>
+      </div>
+      <h2 className="syne" style={{ fontSize: 28, fontWeight: 800, marginBottom: 6, color: '#f1f5f9', lineHeight: 1.15 }}>
+        {title}
+      </h2>
+      {subtitle && (
+        <p style={{ color: C.mute, fontSize: 14, lineHeight: 1.65, maxWidth: 680 }}>{subtitle}</p>
+      )}
+    </div>
+  );
+}
+
+function NextButton({ onClick, label = 'Continue →' }) {
+  return (
+    <div style={{ marginTop: 28, display: 'flex', justifyContent: 'flex-end' }}>
+      <Button onClick={onClick}>{label}</Button>
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   MODULE 0 — HOOK: Real Breaches
+   ═══════════════════════════════════════════════════════════════════ */
+const BREACHES = [
+  { text: '87 million Facebook profiles exposed — Cambridge Analytica, 2018', severe: true },
+  { text: 'US Census 2010: reconstruction attack recovers individual records from published stats', severe: false },
+  { text: 'Uber driver locations reconstructed via repeated SQL queries — zero hacking required', severe: true },
+  { text: 'LinkedIn salary ranges inferred by advertisers through query differencing', severe: false },
+  { text: '533 million Facebook records posted publicly — phone numbers, birthdates, locations', severe: true },
+  { text: 'Hospital patient re-identified from "anonymized" data using zip code + birthdate', severe: false },
+];
+
+function M0_Hook({ onNext }) {
+  const [phase, setPhase] = useState('splash');
+  const [visible, setVisible] = useState([]);
+  const [pivotReady, setPivotReady] = useState(false);
+  const timersRef = useRef([]);
+
+  const clearTimers = () => {
+    timersRef.current.forEach(t => clearTimeout(t));
+    timersRef.current = [];
+  };
+
+  const play = () => {
+    clearTimers();
+    setPhase('play');
+    setVisible([]);
+    setPivotReady(false);
+    BREACHES.forEach((_, i) => {
+      timersRef.current.push(setTimeout(() => setVisible(v => [...v, i]), i * 720 + 250));
+    });
+    timersRef.current.push(setTimeout(() => setPivotReady(true), BREACHES.length * 720 + 550));
+  };
+
+  useEffect(() => () => clearTimers(), []);
+
+  if (phase === 'splash') {
+    return (
+      <div style={{ padding: '4rem 1.5rem 2rem', textAlign: 'center', maxWidth: 560, margin: '0 auto' }} className="fade-up">
+        <div style={{
+          width: 104, height: 104, borderRadius: '50%',
+          margin: '0 auto 32px',
+          border: '2px solid ' + C.blue + '33',
+          background: 'radial-gradient(circle, ' + C.blue + '22 0%, transparent 75%)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 46,
+          boxShadow: '0 0 60px ' + C.blue + '33',
+        }}>🔐</div>
+        <h1 className="syne" style={{ fontSize: 48, fontWeight: 800, marginBottom: 16, color: '#f1f5f9', lineHeight: 1.1 }}>
+          Differential <span style={{ color: C.blue }}>Privacy</span>
+        </h1>
+        <p style={{ color: C.mute, fontSize: 16, lineHeight: 1.75, maxWidth: 460, margin: '0 auto 44px' }}>
+          An interactive course on the mathematics of data privacy — real breaches, live demos, hands-on experiments.
+        </p>
+        <Button onClick={play}>Begin the course →</Button>
+        <p className="mono" style={{ marginTop: 32, fontSize: 11, color: '#475569', letterSpacing: '0.1em', textTransform: 'uppercase' }}>
+          9 modules · ~15 minutes
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <div style={{ padding: '1.5rem 1.25rem', maxWidth: 720, margin: '0 auto' }}>
+      <div style={{ marginBottom: '1.5rem' }}>
+        <p className="mono" style={{ fontSize: 10, color: C.mute, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 14 }}>
+          A brief history of "anonymous" data
+        </p>
+        {BREACHES.map((b, i) => (
+          <div
+            key={i}
+            style={{
+              marginBottom: 10,
+              padding: '13px 16px',
+              borderLeft: `3px solid ${b.severe ? C.red : C.amber}`,
+              borderRadius: '0 10px 10px 0',
+              background: b.severe ? C.red + '08' : C.amber + '08',
+              display: 'flex',
+              gap: 14,
+              alignItems: 'flex-start',
+              opacity: visible.includes(i) ? 1 : 0,
+              transform: visible.includes(i) ? 'none' : 'translateX(-20px)',
+              transition: 'opacity 0.5s, transform 0.5s cubic-bezier(.2,.9,.3,1.2)',
+            }}
+          >
+            <span
+              className="mono"
+              style={{
+                fontSize: 9, fontWeight: 700,
+                color: b.severe ? C.red : C.amber,
+                flexShrink: 0, letterSpacing: '0.08em',
+                padding: '2px 7px', borderRadius: 4,
+                background: (b.severe ? C.red : C.amber) + '15',
+                marginTop: 2,
+              }}
+            >
+              BREACH
+            </span>
+            <span style={{ fontSize: 14, lineHeight: 1.6, color: '#e2e8f0' }}>{b.text}</span>
+          </div>
+        ))}
+      </div>
+      {pivotReady && (
+        <div className="fade-up" style={{ textAlign: 'center', paddingTop: '1rem' }}>
+          <p className="mono" style={{ fontSize: 11, color: C.mute, letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 18 }}>
+            None of these required hacking
+          </p>
+          <h2 className="syne" style={{ fontSize: 30, fontWeight: 800, lineHeight: 1.3, marginBottom: 16, color: '#f1f5f9' }}>
+            What if <span style={{ color: C.blue }}>mathematics</span> could make this impossible?
+          </h2>
+          <p style={{ color: C.mute, fontSize: 15, lineHeight: 1.75, maxWidth: 480, margin: '0 auto 32px' }}>
+            Differential Privacy is a mathematical guarantee that lets us learn from data without ever exposing what any individual contributed.
+          </p>
+          <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
+            <Button onClick={play} ghost small color={C.gray}>↺ Replay</Button>
+            <Button onClick={onNext}>Start the course →</Button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   MODULE 1 — GLOSSARY: Floating Terms
+   ═══════════════════════════════════════════════════════════════════ */
+const TERMS = [
+  { id: 'dp', label: 'Differential Privacy', color: C.blue,
+    def: 'A mathematical guarantee that adds carefully calibrated random noise to outputs, ensuring no individual\'s contribution can be detected regardless of how many queries are run.',
+    example: 'A hospital publishes "average age of cancer patients" with DP. Even knowing every other patient\'s age, you still cannot determine any single patient\'s value.' },
+  { id: 'eps', label: 'Epsilon (ε)', color: C.purple,
+    def: 'The privacy dial. Small ε means strong privacy but noisier results. Large ε means more accurate results but weaker privacy. Real deployments use ε between 0.1 and 10.',
+    example: 'Apple uses ε=2 for iOS analytics. Google\'s COVID Mobility Reports used ε=0.44 per metric per day.' },
+  { id: 'delta', label: 'Delta (δ)', color: C.purple,
+    def: 'A tiny probability that the strict ε guarantee might fail. Usually set to something like 0.000001. The guarantee holds with probability 1−δ.',
+    example: '(ε=1, δ=0.00001): "With 99.999% probability, privacy loss is bounded by ε=1."' },
+  { id: 'noise', label: 'Noise', color: C.amber,
+    def: 'The random value added to a query result. Drawn from the Laplace or Gaussian distribution. More noise means stronger privacy but less accurate results.',
+    example: 'True answer: 48,291 trips. Noise added: +14. Answer returned: 48,305. Accurate for decisions, impossible to reverse-engineer.' },
+  { id: 'sens', label: 'Sensitivity', color: C.amber,
+    def: 'How much can ONE person\'s data change a query result? High sensitivity means one person has a large impact and more noise is required to protect them.',
+    example: '"Total salary of all employees" — high sensitivity. "Average salary of 10,000 employees" — much lower sensitivity.' },
+  { id: 'cent', label: 'Central DP', color: C.green,
+    def: 'The organization holds raw data centrally and adds noise to outputs before sharing. Requires trusting the data collector. Generally more accurate than Local DP at the same ε.',
+    example: 'Uber\'s CHORUS: raw trip data sits on Uber\'s servers. Analysts\' queries are intercepted and noise added before results are returned.' },
+  { id: 'local', label: 'Local DP', color: C.green,
+    def: 'Noise is added directly on the user\'s device before data ever leaves it. The server never sees raw data — even a server breach exposes only noise.',
+    example: 'Apple adds noise to your emoji usage on your iPhone before sending it. Apple\'s servers literally cannot see what you actually typed.' },
+  { id: 'unit', label: 'Privacy Unit', color: C.teal,
+    def: 'The entity being protected — a person, device, session, or company. One unit\'s presence or absence must barely change any output.',
+    example: 'In Uber\'s system, the privacy unit is the individual rider or driver. In LinkedIn\'s, it is the member profile.' },
+  { id: 'bud', label: 'Privacy Budget', color: C.red,
+    def: 'A running total of privacy "spent" by running queries. When exhausted, no more queries are allowed — preventing attackers from canceling noise through repetition.',
+    example: 'LinkedIn tracks a privacy budget per advertiser. Once spent, they cannot extract further demographic insights about individual members.' },
+  { id: 'lap', label: 'Laplace Mechanism', color: C.teal,
+    def: 'The most common DP noise mechanism. Draws random noise from the Laplace distribution. Noise scale = Sensitivity ÷ ε.',
+    example: 'Release "sick days taken" with ε=1, sensitivity=1: add Laplace noise. Could be +2.3 or -0.8 — never the same twice.' },
+  { id: 'comp', label: 'Composition', color: C.orange,
+    def: 'The rule for combining privacy guarantees across multiple queries. Running k queries, each with ε privacy, costs up to k·ε total — which is why budgets matter.',
+    example: 'Run 5 queries at ε=0.5 each → total privacy cost ≤ ε=2.5. Advanced composition and RDP give tighter bounds.' },
+  { id: 'rr', label: 'Randomized Response', color: C.blue,
+    def: 'The simplest Local DP technique: each respondent flips a coin and either tells the truth or reports a random answer. The server can statistically recover the population rate without learning any individual answer.',
+    example: 'In a survey about drug use, a coin flip decides if your answer gets randomized. You have plausible deniability — but at scale, the true rate is still visible.' },
+  { id: 'dpsgd', label: 'DP-SGD', color: C.red,
+    def: 'Differentially Private Stochastic Gradient Descent. During ML training, gradients are clipped and noise is added per batch so the final model cannot memorize any single training example.',
+    example: 'Google trains Gboard\'s next-word prediction with DP-SGD so the model can\'t leak messages you actually typed on your phone.' },
+  { id: 'gauss', label: 'Gaussian Mechanism', color: C.teal,
+    def: 'An alternative to Laplace that adds Gaussian (bell-curve) noise. Used when you accept a small δ in exchange for tighter bounds on the total privacy cost of many queries.',
+    example: 'Apple\'s emoji analytics use the Gaussian mechanism because it composes better across millions of users reporting daily.' },
+  { id: 'plaus', label: 'Plausible Deniability', color: C.orange,
+    def: 'Any observed output could plausibly have come from a world where the individual never contributed their data. This is the human-readable promise behind the ε guarantee.',
+    example: 'Even if an attacker sees "YES" next to your anonymous ID, they cannot prove it was your real answer — the coin flip could have produced it.' },
+];
+
+// Layout terms in a responsive grid — no overlaps, scales with container
+function M1_Glossary({ onNext }) {
+  const [selected, setSelected] = useState(null);
+  const term = TERMS.find(t => t.id === selected);
+
+  return (
+    <div style={{ padding: '1.5rem 1.25rem', maxWidth: 880, margin: '0 auto' }}>
+      <ModuleHeader
+        tagLabel="MODULE 1"
+        tagColor={C.purple}
+        title="Key Terminology"
+        subtitle="Click any term to reveal its plain-English definition and a real-world example."
+      />
+
+      <div className="glossary-grid" style={{
+        display: 'grid',
+        gridTemplateColumns: 'repeat(5, minmax(0, 1fr))',
+        gap: 10,
+        marginBottom: 20,
+        padding: 20,
+        borderRadius: 14,
+        border: '1px solid ' + C.border,
+        background: 'radial-gradient(circle at 30% 20%, ' + C.blue + '0f, transparent 70%), #0a1020',
+      }}>
+        {TERMS.map(t => {
+          const active = selected === t.id;
+          return (
+            <button
+              key={t.id}
+              onClick={() => setSelected(active ? null : t.id)}
+              style={{
+                padding: '11px 12px',
+                borderRadius: 22,
+                fontFamily: 'inherit',
+                fontWeight: 600,
+                fontSize: 12,
+                cursor: 'pointer',
+                background: active ? t.color : t.color + '15',
+                border: `1.5px solid ${active ? t.color : t.color + '55'}`,
+                color: active ? '#fff' : t.color,
+                transition: 'transform 0.2s cubic-bezier(.2,.9,.3,1.2), background 0.25s, border-color 0.25s, box-shadow 0.25s, color 0.25s',
+                whiteSpace: 'nowrap',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                boxShadow: active ? `0 4px 18px ${t.color}66, 0 0 0 2px ${t.color}33` : 'none',
+                transform: 'translateY(0)',
+              }}
+              onMouseEnter={e => {
+                if (!active) {
+                  e.currentTarget.style.background = t.color + '32';
+                  e.currentTarget.style.borderColor = t.color;
+                  e.currentTarget.style.color = '#fff';
+                  e.currentTarget.style.transform = 'translateY(-2px)';
+                  e.currentTarget.style.boxShadow = `0 6px 18px ${t.color}44`;
+                }
+              }}
+              onMouseLeave={e => {
+                if (!active) {
+                  e.currentTarget.style.background = t.color + '15';
+                  e.currentTarget.style.borderColor = t.color + '55';
+                  e.currentTarget.style.color = t.color;
+                  e.currentTarget.style.transform = 'translateY(0)';
+                  e.currentTarget.style.boxShadow = 'none';
+                }
+              }}
+            >
+              {t.label}
+            </button>
+          );
+        })}
+      </div>
+
+      <div style={{ minHeight: 180 }}>
+        {term ? (
+          <Card key={term.id} className="fade-up" style={{
+            background: `linear-gradient(180deg, ${term.color}12 0%, ${term.color}05 100%)`,
+            border: `1px solid ${term.color}44`,
+          }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 14, marginBottom: 12 }}>
+              <h3 className="syne" style={{ fontSize: 18, fontWeight: 800, color: term.color }}>{term.label}</h3>
+              <button
+                onClick={() => setSelected(null)}
+                style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 22, color: C.mute, lineHeight: 1, padding: 0 }}
+                aria-label="Close"
+              >×</button>
+            </div>
+            <p style={{ fontSize: 14.5, lineHeight: 1.7, marginBottom: 14, color: '#e2e8f0' }}>{term.def}</p>
+            <div style={{
+              padding: '12px 16px',
+              background: '#0a1020',
+              borderRadius: 10,
+              borderLeft: `3px solid ${term.color}`,
+            }}>
+              <div className="mono" style={{ fontSize: 9, color: term.color, letterSpacing: '0.08em', marginBottom: 6, fontWeight: 600 }}>
+                EXAMPLE
+              </div>
+              <p style={{ fontSize: 13.5, color: '#cbd5e1', lineHeight: 1.65 }}>{term.example}</p>
+            </div>
+          </Card>
+        ) : (
+          <div style={{
+            textAlign: 'center',
+            padding: '40px 20px',
+            color: C.mute,
+            fontSize: 14,
+            border: '1px dashed ' + C.border,
+            borderRadius: 14,
+          }}>
+            ↑ Click a term above to reveal its definition
+          </div>
+        )}
+      </div>
+
+      <NextButton onClick={onNext} label="Next: Privacy Attacks →" />
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   MODULE 2 — PRIVACY ATTACKS: 5 sub-attacks
+   ═══════════════════════════════════════════════════════════════════ */
+
+// ── 2A: DIFFERENCING ATTACK ────────────────────────────────────────
+const EMPLOYEES = [
+  { name: 'Alice Chen',    dept: 'Eng', salary: 105000 },
+  { name: 'Bob Patel',     dept: 'Eng', salary: 92000  },
+  { name: 'Carol Wu',      dept: 'Mkt', salary: 78000  },
+  { name: 'Dave Singh',    dept: 'Eng', salary: 98000  },
+  { name: 'Eve Nakamura',  dept: 'Eng', salary: 115000 },
+];
+const ENG_SUM = EMPLOYEES.filter(e => e.dept === 'Eng').reduce((a, e) => a + e.salary, 0);
+const ENG_NO_ALICE = EMPLOYEES.filter(e => e.dept === 'Eng' && e.name !== 'Alice Chen').reduce((a, e) => a + e.salary, 0);
+
+function DifferencingAttack() {
+  const [step, setStep] = useState(0);
+  const reset = () => setStep(0);
+
+  return (
+    <div>
+      <p style={{ fontSize: 13.5, color: C.mute, lineHeight: 1.65, marginBottom: 18 }}>
+        Two legitimate SQL queries. No hacking. Subtraction exposes a private salary.
+      </p>
+
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: 'minmax(0, 1.05fr) minmax(0, 1fr)',
+        gap: 14,
+        marginBottom: 16,
+      }}>
+        <Card style={{ padding: '12px 14px' }}>
+          <div className="mono" style={{ fontSize: 9, color: C.mute, marginBottom: 8, letterSpacing: '0.08em' }}>
+            employees_db
+          </div>
+          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+            <thead>
+              <tr style={{ background: '#0a1020' }}>
+                {['Name', 'Dept', 'Salary'].map(h => (
+                  <th key={h} className="mono" style={{ padding: '6px 8px', fontSize: 10, color: C.mute, textAlign: 'left', fontWeight: 500 }}>
+                    {h}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {EMPLOYEES.map((e, i) => {
+                const exposed = step >= 5 && e.name === 'Alice Chen';
+                return (
+                  <tr key={i} style={{
+                    borderTop: '1px solid #1e293b',
+                    background: exposed ? C.red + '15' : 'transparent',
+                    transition: 'background 0.5s',
+                  }}>
+                    <td style={{ padding: '7px 8px', fontSize: 12, color: exposed ? C.red : '#e2e8f0', fontWeight: exposed ? 600 : 400 }}>
+                      {e.name}{exposed && ' ▲'}
+                    </td>
+                    <td className="mono" style={{ padding: '7px 8px', fontSize: 11, color: C.mute }}>{e.dept}</td>
+                    <td className="mono" style={{ padding: '7px 8px', fontSize: 12, color: exposed ? C.red : C.mute, fontWeight: exposed ? 700 : 400 }}>
+                      {exposed ? '$' + e.salary.toLocaleString() : '██████'}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </Card>
+
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+          {step >= 1 && (
+            <Card className="fade-up" style={{ padding: '11px 13px' }}>
+              <div className="mono" style={{ fontSize: 9, color: C.blue, marginBottom: 6, letterSpacing: '0.08em', fontWeight: 600 }}>
+                QUERY A
+              </div>
+              <pre className="mono" style={{ fontSize: 11, lineHeight: 1.7, whiteSpace: 'pre-wrap', color: '#cbd5e1', margin: 0 }}>
+{`SELECT SUM(salary)
+FROM employees
+WHERE dept='Engineering'`}
+              </pre>
+              {step >= 2 && (
+                <div className="mono fade-up" style={{ marginTop: 8, padding: '6px 10px', background: C.blue + '15', borderRadius: 6, fontSize: 12, color: C.blue, fontWeight: 600 }}>
+                  → ${ENG_SUM.toLocaleString()}
+                </div>
+              )}
+            </Card>
+          )}
+
+          {step >= 3 && (
+            <Card className="fade-up" style={{ padding: '11px 13px' }}>
+              <div className="mono" style={{ fontSize: 9, color: C.amber, marginBottom: 6, letterSpacing: '0.08em', fontWeight: 600 }}>
+                QUERY B
+              </div>
+              <pre className="mono" style={{ fontSize: 11, lineHeight: 1.7, whiteSpace: 'pre-wrap', color: '#cbd5e1', margin: 0 }}>
+{`SELECT SUM(salary)
+FROM employees
+WHERE dept='Engineering'
+  AND name != 'Alice Chen'`}
+              </pre>
+              {step >= 4 && (
+                <div className="mono fade-up" style={{ marginTop: 8, padding: '6px 10px', background: C.amber + '15', borderRadius: 6, fontSize: 12, color: C.amber, fontWeight: 600 }}>
+                  → ${ENG_NO_ALICE.toLocaleString()}
+                </div>
+              )}
+            </Card>
+          )}
+
+          {step >= 4 && (
+            <Card className="fade-up" style={{ padding: '11px 13px', background: C.red + '08', border: `1px solid ${C.red}33` }}>
+              <div className="mono" style={{ fontSize: 9, color: C.red, marginBottom: 6, letterSpacing: '0.08em', fontWeight: 600 }}>
+                SUBTRACT
+              </div>
+              <div className="mono" style={{ fontSize: 13, color: '#e2e8f0', lineHeight: 1.9 }}>
+                ${ENG_SUM.toLocaleString()} − ${ENG_NO_ALICE.toLocaleString()}
+                <br />
+                {step >= 5 && (
+                  <span className="fade-up" style={{ color: C.red, fontWeight: 700, display: 'inline-block' }}>
+                    = ${(ENG_SUM - ENG_NO_ALICE).toLocaleString()} ← Alice's salary
+                  </span>
+                )}
+              </div>
+            </Card>
+          )}
+        </div>
+      </div>
+
+      <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+        {step === 0 && <Button onClick={() => setStep(1)}>Run Query A</Button>}
+        {step === 1 && <Button onClick={() => setStep(2)}>Execute →</Button>}
+        {step === 2 && <Button onClick={() => setStep(3)} color={C.amber}>Run Query B</Button>}
+        {step === 3 && <Button onClick={() => setStep(4)} color={C.amber}>Execute →</Button>}
+        {step === 4 && <Button onClick={() => setStep(5)} color={C.red}>Expose salary</Button>}
+        {step >= 5 && <Button onClick={reset} ghost small color={C.gray}>↺ Reset</Button>}
+      </div>
+    </div>
+  );
+}
+
+// ── 2B: RECONSTRUCTION ATTACK — story-driven game ──────────────────
+// Reporter Quinn tries to uncover each employee's secret salary at
+// Luna Labs by running only "innocent" aggregate queries.
+const RECON_EMPLOYEES = [
+  { name: 'Anya',  emoji: '👩‍💼', trueSalary: 72 },
+  { name: 'Ben',   emoji: '👨‍💼', trueSalary: 95 },
+  { name: 'Cara',  emoji: '👩‍🔬', trueSalary: 58 },
+  { name: 'Dev',   emoji: '👨‍🔬', trueSalary: 84 },
+  { name: 'Ela',   emoji: '👩‍💻', trueSalary: 67 },
+  { name: 'Finn',  emoji: '👨‍💻', trueSalary: 91 },
+];
+
+const RECON_QUERIES = [
+  { id: 'sum',    label: 'SUM of all salaries',    formula: 'Σ(salary)' },
+  { id: 'avg',    label: 'AVERAGE salary',         formula: 'Σ(salary) / n' },
+  { id: 'max',    label: 'MAXIMUM salary',         formula: 'max(salary)' },
+  { id: 'min',    label: 'MINIMUM salary',         formula: 'min(salary)' },
+  { id: 'top2',   label: 'SUM of TOP 2 salaries',  formula: 'max₁ + max₂' },
+  { id: 'over80', label: 'COUNT over $80k',        formula: '|{s ≥ 80}|' },
+];
+
+function ReconstructionAttack() {
+  const [runIds, setRunIds] = useState([]);
+
+  const run = id => {
+    setRunIds(prev => prev.includes(id) ? prev : [...prev, id]);
+  };
+  const reset = () => setRunIds([]);
+
+  const numRun = runIds.length;
+  const totalQ = RECON_QUERIES.length;
+  const pct = numRun / totalQ;
+  const exposed = numRun >= totalQ;
+
+  // Spread shrinks non-linearly — each query collapses the search space more dramatically
+  const maxSpread = 30;
+  const spread = Math.max(1.2, maxSpread * Math.pow(1 - pct, 1.5));
+
+  const sals = RECON_EMPLOYEES.map(e => e.trueSalary);
+  const totalTrue = sals.reduce((a, b) => a + b, 0);
+
+  const computeAnswer = id => {
+    switch (id) {
+      case 'sum':    return '$' + totalTrue + 'k';
+      case 'avg':    return '$' + Math.round(totalTrue / sals.length) + 'k';
+      case 'max':    return '$' + Math.max(...sals) + 'k';
+      case 'min':    return '$' + Math.min(...sals) + 'k';
+      case 'top2': {
+        const s = [...sals].sort((a, b) => b - a);
+        return '$' + (s[0] + s[1]) + 'k';
+      }
+      case 'over80': return sals.filter(v => v >= 80).length + ' people';
+      default: return '—';
+    }
+  };
+
+  const storyMsg = (() => {
+    if (numRun === 0) return '📰 Reporter Quinn suspects Luna Labs has huge pay gaps. HR only releases aggregate stats — never individuals. But Quinn has a plan…';
+    if (numRun === 1) return '🔍 One number down. Every salary could still be almost anything — the picture is blurry.';
+    if (numRun === 2) return '🎯 Two queries, two constraints. The possibilities are shrinking.';
+    if (numRun === 3) return '⚡ Half the queries in. The math is starting to click — ranges are collapsing.';
+    if (numRun === 4) return '💥 Four aggregates later, individuals are becoming recognizable.';
+    if (numRun === 5) return '🚨 One query away from a full reconstruction…';
+    return '💀 EXPOSED. Every single salary recovered — from queries that never asked for a single name.';
+  })();
+
+  const bannerColor = exposed ? C.red : numRun >= totalQ - 1 ? C.amber : C.blue;
+
+  return (
+    <div>
+      <p style={{ fontSize: 13.5, color: C.mute, lineHeight: 1.65, marginBottom: 14 }}>
+        Each "innocent" aggregate is a constraint on individual values. Stack enough of them and the math lets you reconstruct every single salary — without ever asking a personal question.
+      </p>
+
+      {/* STORY BANNER */}
+      <Card style={{
+        background: bannerColor + '12',
+        border: `1px solid ${bannerColor}55`,
+        marginBottom: 14,
+        transition: 'all 0.4s',
+      }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+          <div className="mono" style={{ fontSize: 9, color: bannerColor, letterSpacing: '0.1em', fontWeight: 700 }}>
+            THE STORY — TURN {numRun}/{totalQ}
+          </div>
+          <div style={{ display: 'flex', gap: 3 }}>
+            {RECON_QUERIES.map((_, i) => (
+              <div key={i} style={{
+                width: 14, height: 4, borderRadius: 2,
+                background: i < numRun ? bannerColor : '#1e293b',
+                transition: 'background 0.3s',
+              }} />
+            ))}
+          </div>
+        </div>
+        <p style={{ fontSize: 14, lineHeight: 1.6, color: '#e2e8f0' }}>{storyMsg}</p>
+      </Card>
+
+      {/* EMPLOYEE POSSIBILITY BARS */}
+      <Card style={{ marginBottom: 14 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 10 }}>
+          <div className="mono" style={{ fontSize: 9, color: C.mute, letterSpacing: '0.08em', fontWeight: 600 }}>
+            SALARY SEARCH SPACE
+          </div>
+          <div className="mono" style={{ fontSize: 9, color: C.mute }}>
+            $40k &nbsp;────────&nbsp; $120k
+          </div>
+        </div>
+        {RECON_EMPLOYEES.map(emp => {
+          const lo = Math.max(40, emp.trueSalary - spread);
+          const hi = Math.min(120, emp.trueSalary + spread);
+          const leftPct = ((lo - 40) / 80) * 100;
+          const widthPct = Math.max(1.5, ((hi - lo) / 80) * 100);
+          const truePct = ((emp.trueSalary - 40) / 80) * 100;
+
+          return (
+            <div key={emp.name} style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
+              <div style={{
+                fontSize: 16,
+                width: 26, height: 26,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                background: exposed ? C.red + '30' : '#0f1828',
+                borderRadius: 7,
+                border: `1px solid ${exposed ? C.red : C.border}`,
+                transition: 'all 0.4s',
+              }}>{emp.emoji}</div>
+              <div style={{ fontSize: 12, fontWeight: 600, width: 38, color: exposed ? C.red : '#e2e8f0' }}>
+                {emp.name}
+              </div>
+              <div style={{
+                flex: 1, position: 'relative',
+                height: 18, background: '#0a1020', borderRadius: 9, overflow: 'hidden',
+                border: '1px solid ' + C.border,
+              }}>
+                <div style={{
+                  position: 'absolute',
+                  left: leftPct + '%',
+                  width: widthPct + '%',
+                  top: 0, bottom: 0,
+                  background: exposed
+                    ? `linear-gradient(90deg, ${C.red}, ${C.red}dd)`
+                    : `linear-gradient(90deg, ${C.blue}66, ${C.blue}cc, ${C.blue}66)`,
+                  borderRadius: 9,
+                  transition: 'all 0.6s cubic-bezier(.2,.9,.3,1.2)',
+                  boxShadow: exposed ? `0 0 10px ${C.red}88` : 'none',
+                }} />
+                {exposed && (
+                  <div style={{
+                    position: 'absolute',
+                    left: `calc(${truePct}% - 1px)`,
+                    top: -2, bottom: -2,
+                    width: 2,
+                    background: '#fff',
+                    boxShadow: '0 0 6px #fff',
+                  }} />
+                )}
+              </div>
+              <div className="mono" style={{
+                fontSize: 11, width: 72, textAlign: 'right',
+                color: exposed ? C.red : C.mute, fontWeight: exposed ? 700 : 500,
+                transition: 'color 0.4s',
+              }}>
+                {exposed ? `$${emp.trueSalary}k` : `$${Math.round(lo)}–${Math.round(hi)}k`}
+              </div>
+            </div>
+          );
+        })}
+      </Card>
+
+      {/* QUERY BUTTONS */}
+      <div style={{ marginBottom: 12 }}>
+        <div className="mono" style={{ fontSize: 9, color: C.mute, letterSpacing: '0.08em', fontWeight: 600, marginBottom: 8 }}>
+          AGGREGATE QUERIES YOU CAN RUN
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 8 }}>
+          {RECON_QUERIES.map(q => {
+            const hasRun = runIds.includes(q.id);
+            return (
+              <button
+                key={q.id}
+                onClick={() => run(q.id)}
+                disabled={hasRun}
+                style={{
+                  padding: '10px 12px',
+                  borderRadius: 10,
+                  fontFamily: 'inherit',
+                  textAlign: 'left',
+                  cursor: hasRun ? 'default' : 'pointer',
+                  background: hasRun ? C.amber + '12' : '#0f1828',
+                  border: `1px solid ${hasRun ? C.amber + '66' : C.border}`,
+                  transition: 'all 0.2s',
+                }}
+                onMouseEnter={e => {
+                  if (!hasRun) {
+                    e.currentTarget.style.background = C.blue + '15';
+                    e.currentTarget.style.borderColor = C.blue + '66';
+                  }
+                }}
+                onMouseLeave={e => {
+                  if (!hasRun) {
+                    e.currentTarget.style.background = '#0f1828';
+                    e.currentTarget.style.borderColor = C.border;
+                  }
+                }}
+              >
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}>
+                  <span style={{ fontSize: 12, fontWeight: 600, color: hasRun ? C.amber : '#e2e8f0' }}>
+                    {q.label}
+                  </span>
+                  {hasRun && (
+                    <span className="mono" style={{ fontSize: 11, color: C.amber, fontWeight: 700 }}>
+                      = {computeAnswer(q.id)}
+                    </span>
+                  )}
+                </div>
+                <div className="mono" style={{ fontSize: 9.5, color: C.mute, marginTop: 3 }}>
+                  {q.formula}
+                </div>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      <button
+        onClick={reset}
+        style={{
+          background: 'none',
+          border: '1px solid ' + C.border,
+          color: C.mute,
+          padding: '7px 14px',
+          borderRadius: 8,
+          cursor: 'pointer',
+          fontFamily: 'inherit',
+          fontSize: 11,
+        }}
+      >
+        ↺ Reset the story
+      </button>
+    </div>
+  );
+}
+
+// ── 2C: MEMBERSHIP INFERENCE ATTACK (visual, story-driven) ─────────
+const MEMBERSHIP_PEOPLE = [
+  { id: 'alice', name: 'Alice', emoji: '👩‍⚕️', inTraining: true,
+    bio: 'Diagnosed with a rare condition in 2019. Her scan was in the training batch.',
+    confNoDp: 92, confDp: 69 },
+  { id: 'bob',   name: 'Bob',   emoji: '👨‍🦰', inTraining: false,
+    bio: 'A stranger the model has never seen — his scan was NOT in training data.',
+    confNoDp: 54, confDp: 66 },
+  { id: 'carla', name: 'Carla', emoji: '👩‍🦱', inTraining: true,
+    bio: 'A repeat patient. Her scans were processed dozens of times during training.',
+    confNoDp: 89, confDp: 67 },
+];
+
+function MembershipAttack() {
+  const [stage, setStage] = useState('intro'); // intro → probe → compare
+  const [selectedId, setSelectedId] = useState(null);
+  const [probeTick, setProbeTick] = useState(0);
+  const [useDp, setUseDp] = useState(false);
+
+  const selected = MEMBERSHIP_PEOPLE.find(p => p.id === selectedId);
+  const confidence = !selected ? 0 : (useDp ? selected.confDp : selected.confNoDp);
+  const threshold = 75;
+  const inferred = confidence >= threshold;
+
+  // Animate a "probe" tick so the meter jumps visibly each click
+  const probe = id => {
+    setSelectedId(id);
+    setProbeTick(t => t + 1);
+  };
+
+  if (stage === 'intro') {
+    return (
+      <div>
+        <Card style={{
+          background: `linear-gradient(135deg, ${C.purple}18, ${C.purple}05)`,
+          border: `1px solid ${C.purple}55`,
+          marginBottom: 14,
+          position: 'relative',
+          overflow: 'hidden',
+        }}>
+          <div style={{
+            position: 'absolute', top: -10, right: -10,
+            fontSize: 80, opacity: 0.08, transform: 'rotate(-8deg)',
+          }}>🧠</div>
+          <div className="mono" style={{ fontSize: 9, color: C.purple, marginBottom: 8, letterSpacing: '0.1em', fontWeight: 700 }}>
+            THE SCENARIO
+          </div>
+          <p style={{ fontSize: 15, lineHeight: 1.65, color: '#e2e8f0', marginBottom: 10, position: 'relative' }}>
+            A hospital trained a medical AI on <strong style={{ color: C.purple }}>10,000 patient scans</strong>. That list is supposed to stay secret.
+          </p>
+          <p style={{ fontSize: 13.5, lineHeight: 1.6, color: C.mute, position: 'relative' }}>
+            But models <em>quietly memorize</em> their training data. An attacker with a photocopy of someone's scan can ask the AI "do you remember this?" — and the confidence score betrays the answer.
+          </p>
+        </Card>
+
+        <div style={{
+          display: 'grid', gridTemplateColumns: '1fr auto 1fr', gap: 14, alignItems: 'center',
+          marginBottom: 14, padding: '16px 10px',
+          background: '#0a1020', borderRadius: 12, border: '1px solid ' + C.border,
+        }}>
+          <div style={{ textAlign: 'center' }}>
+            <div style={{ fontSize: 36, marginBottom: 4 }}>👤</div>
+            <div className="mono" style={{ fontSize: 9, color: C.mute, letterSpacing: '0.08em' }}>ATTACKER</div>
+            <div style={{ fontSize: 11, color: '#e2e8f0', marginTop: 3 }}>has a scan</div>
+          </div>
+          <div style={{ fontSize: 18, color: C.purple }}>→</div>
+          <div style={{ textAlign: 'center' }}>
+            <div style={{ fontSize: 36, marginBottom: 4 }}>🧠</div>
+            <div className="mono" style={{ fontSize: 9, color: C.mute, letterSpacing: '0.08em' }}>THE AI</div>
+            <div style={{ fontSize: 11, color: '#e2e8f0', marginTop: 3 }}>"I'm 92% sure…"</div>
+          </div>
+        </div>
+
+        <Button onClick={() => setStage('probe')} color={C.purple}>Try the attack yourself →</Button>
+      </div>
+    );
+  }
+
+  if (stage === 'probe') {
+    return (
+      <div>
+        <p style={{ fontSize: 13.5, color: C.mute, lineHeight: 1.65, marginBottom: 12 }}>
+          Click a patient to probe the model. Watch the confidence meter — training members will spike higher than strangers.
+        </p>
+
+        {/* Patient lineup */}
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(3, 1fr)',
+          gap: 10,
+          marginBottom: 14,
+        }}>
+          {MEMBERSHIP_PEOPLE.map(p => {
+            const active = selectedId === p.id;
+            return (
+              <button
+                key={p.id}
+                onClick={() => probe(p.id)}
+                style={{
+                  padding: '14px 8px',
+                  borderRadius: 12,
+                  fontFamily: 'inherit',
+                  cursor: 'pointer',
+                  background: active
+                    ? (useDp ? C.teal + '22' : (p.inTraining ? C.red + '22' : C.green + '18'))
+                    : '#0f1828',
+                  border: `2px solid ${active
+                    ? (useDp ? C.teal : (p.inTraining ? C.red : C.green))
+                    : C.border}`,
+                  transition: 'all 0.3s cubic-bezier(.2,.9,.3,1.2)',
+                  transform: active ? 'translateY(-3px)' : 'translateY(0)',
+                  boxShadow: active
+                    ? `0 8px 24px ${(useDp ? C.teal : (p.inTraining ? C.red : C.green))}44`
+                    : 'none',
+                }}
+                onMouseEnter={e => {
+                  if (!active) {
+                    e.currentTarget.style.borderColor = C.purple + '88';
+                    e.currentTarget.style.background = C.purple + '10';
+                  }
+                }}
+                onMouseLeave={e => {
+                  if (!active) {
+                    e.currentTarget.style.borderColor = C.border;
+                    e.currentTarget.style.background = '#0f1828';
+                  }
+                }}
+              >
+                <div style={{ fontSize: 36, marginBottom: 6, lineHeight: 1 }}>{p.emoji}</div>
+                <div style={{ fontSize: 13, fontWeight: 700, color: '#e2e8f0', marginBottom: 2 }}>{p.name}</div>
+                <div className="mono" style={{ fontSize: 9, color: C.mute }}>click to probe</div>
+              </button>
+            );
+          })}
+        </div>
+
+        {/* DP toggle */}
+        <div style={{
+          display: 'flex', gap: 8, marginBottom: 14,
+          padding: 4, background: '#0a1020',
+          borderRadius: 10, border: '1px solid ' + C.border,
+        }}>
+          {[
+            { val: false, label: '🔓 No Privacy', col: C.red },
+            { val: true,  label: '🔒 With DP-SGD', col: C.teal },
+          ].map(opt => (
+            <button
+              key={String(opt.val)}
+              onClick={() => setUseDp(opt.val)}
+              style={{
+                flex: 1,
+                padding: '9px 10px',
+                background: useDp === opt.val ? opt.col + '22' : 'transparent',
+                color: useDp === opt.val ? opt.col : C.mute,
+                border: useDp === opt.val ? `1px solid ${opt.col}66` : '1px solid transparent',
+                borderRadius: 8,
+                cursor: 'pointer',
+                fontFamily: 'inherit',
+                fontSize: 12,
+                fontWeight: 600,
+                transition: 'all 0.25s',
+              }}
+            >
+              {opt.label}
+            </button>
+          ))}
+        </div>
+
+        {/* Confidence readout */}
+        <Card style={{
+          marginBottom: 12,
+          minHeight: 210,
+          background: selected
+            ? `linear-gradient(180deg, ${inferred && !useDp ? C.red : (useDp ? C.teal : C.green)}08, transparent)`
+            : undefined,
+          transition: 'background 0.4s',
+        }}>
+          {!selected ? (
+            <div style={{ textAlign: 'center', padding: '48px 16px', color: C.mute, fontSize: 13 }}>
+              ↑ Click a patient above to see the AI's confidence
+            </div>
+          ) : (
+            <div key={probeTick} className="fade-up">
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
+                <div style={{ fontSize: 32 }}>{selected.emoji}</div>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: 14, fontWeight: 700, color: '#e2e8f0' }}>{selected.name}</div>
+                  <div style={{ fontSize: 11.5, color: C.mute, lineHeight: 1.4, marginTop: 2 }}>{selected.bio}</div>
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 8 }}>
+                <span className="mono" style={{ fontSize: 9, color: C.mute, letterSpacing: '0.08em' }}>
+                  AI CONFIDENCE: "I REMEMBER THIS"
+                </span>
+                <span className="mono" style={{
+                  fontSize: 28,
+                  fontWeight: 700,
+                  color: inferred && !useDp ? C.red : (useDp ? C.teal : C.green),
+                  transition: 'color 0.35s',
+                }}>
+                  {confidence}%
+                </span>
+              </div>
+
+              <div style={{ position: 'relative', height: 26, background: '#0a1020', borderRadius: 6, overflow: 'hidden', border: '1px solid ' + C.border, marginBottom: 6 }}>
+                <div style={{
+                  height: '100%',
+                  width: confidence + '%',
+                  background: `linear-gradient(90deg, ${inferred && !useDp ? C.red : (useDp ? C.teal : C.green)}aa, ${inferred && !useDp ? C.red : (useDp ? C.teal : C.green)})`,
+                  transition: 'width 0.6s cubic-bezier(.2,.9,.3,1.2), background 0.3s',
+                  borderRadius: 6,
+                }} />
+                <div style={{
+                  position: 'absolute',
+                  top: -3,
+                  left: threshold + '%',
+                  width: 2,
+                  height: 'calc(100% + 6px)',
+                  background: '#e2e8f0',
+                  boxShadow: '0 0 8px rgba(255,255,255,0.5)',
+                }} />
+                <div className="mono" style={{
+                  position: 'absolute',
+                  top: -18, left: `calc(${threshold}% - 24px)`,
+                  fontSize: 8.5, color: C.mute, letterSpacing: '0.05em',
+                }}>
+                  threshold
+                </div>
+              </div>
+
+              <div style={{
+                marginTop: 14,
+                padding: '12px 14px',
+                borderRadius: 10,
+                fontSize: 13,
+                fontWeight: 600,
+                background: useDp
+                  ? C.teal + '15'
+                  : (inferred === selected.inTraining ? C.red + '18' : C.amber + '15'),
+                color: useDp ? C.teal : (inferred === selected.inTraining ? C.red : C.amber),
+                border: `1px solid ${useDp ? C.teal + '55' : (inferred === selected.inTraining ? C.red + '55' : C.amber + '55')}`,
+              }}>
+                {useDp
+                  ? '🔒 With DP-SGD, confidence scores are fuzzed. The attacker cannot reliably tell members from strangers.'
+                  : (inferred
+                      ? (selected.inTraining
+                          ? '⚠ CORRECT — the model "remembers" this person. Privacy breach confirmed.'
+                          : '⚠ FALSE POSITIVE — model is over-confident, but this was a stranger.')
+                      : (selected.inTraining
+                          ? '⚠ BARELY BELOW THRESHOLD — another query could push it over.'
+                          : '✓ Below threshold — as expected for a stranger.')
+                  )
+                }
+              </div>
+            </div>
+          )}
+        </Card>
+
+        <Button onClick={() => setStage('compare')} color={C.purple}>See the full comparison →</Button>
+      </div>
+    );
+  }
+
+  // stage === 'compare'
+  return (
+    <div>
+      <p style={{ fontSize: 13.5, color: C.mute, lineHeight: 1.65, marginBottom: 14 }}>
+        The confidence <strong style={{ color: C.red }}>gap</strong> between training members and strangers is what the attacker exploits. DP-SGD closes that gap.
+      </p>
+
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 14 }}>
+        {[
+          { lbl: '🔓 Without DP', members: [92, 89], stranger: 54, col: C.red, verdict: '35+ pt gap — attack succeeds' },
+          { lbl: '🔒 With DP-SGD', members: [69, 67], stranger: 66, col: C.teal, verdict: '~3 pt gap — attack fails' },
+        ].map(block => (
+          <Card key={block.lbl} style={{
+            background: block.col + '08',
+            border: `1px solid ${block.col}44`,
+          }}>
+            <div className="mono" style={{ fontSize: 10, color: block.col, marginBottom: 12, letterSpacing: '0.08em', fontWeight: 700 }}>
+              {block.lbl}
+            </div>
+            {[
+              { lbl: '👩‍⚕️ Alice (member)', v: block.members[0] },
+              { lbl: '👩‍🦱 Carla (member)', v: block.members[1] },
+              { lbl: '👨‍🦰 Bob (stranger)', v: block.stranger },
+            ].map(row => (
+              <div key={row.lbl} style={{ marginBottom: 8 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, marginBottom: 3, color: '#e2e8f0' }}>
+                  <span>{row.lbl}</span>
+                  <strong className="mono" style={{ color: block.col }}>{row.v}%</strong>
+                </div>
+                <div style={{ background: '#0a1020', borderRadius: 3, height: 7, overflow: 'hidden' }}>
+                  <div style={{
+                    height: '100%',
+                    width: row.v + '%',
+                    background: `linear-gradient(90deg, ${block.col}88, ${block.col})`,
+                    borderRadius: 3,
+                    transition: 'width 0.7s cubic-bezier(.2,.9,.3,1.2)',
+                  }} />
+                </div>
+              </div>
+            ))}
+            <div style={{
+              marginTop: 10, padding: '7px 10px',
+              background: block.col + '18',
+              borderRadius: 6,
+              fontSize: 11, fontWeight: 600, color: block.col, textAlign: 'center',
+            }}>
+              {block.verdict}
+            </div>
+          </Card>
+        ))}
+      </div>
+
+      <button
+        onClick={() => { setStage('intro'); setSelectedId(null); setUseDp(false); }}
+        style={{
+          background: 'none',
+          border: '1px solid ' + C.border,
+          color: C.mute,
+          padding: '7px 14px',
+          borderRadius: 8,
+          cursor: 'pointer',
+          fontFamily: 'inherit',
+          fontSize: 11,
+        }}
+      >
+        ↺ Restart demo
+      </button>
+    </div>
+  );
+}
+
+// ── 2D: LINKAGE ATTACK ─────────────────────────────────────────────
+const HEALTH_RECORDS = [
+  { zip: '02139', dob: '1965', sex: 'M', diag: 'Hypertension' },
+  { zip: '02141', dob: '1979', sex: 'F', diag: 'Diabetes T2' },
+  { zip: '02139', dob: '1972', sex: 'M', diag: 'Anxiety' },
+  { zip: '02138', dob: '1988', sex: 'F', diag: 'Asthma' },
+  { zip: '02140', dob: '1955', sex: 'M', diag: 'Heart Disease' },
+];
+const VOTER_ROLLS = [
+  { name: 'William Foster',  zip: '02139', dob: '1965', sex: 'M' },
+  { name: 'Sarah Kim',       zip: '02141', dob: '1979', sex: 'F' },
+  { name: 'James Ortega',    zip: '02139', dob: '1972', sex: 'M' },
+  { name: 'Rebecca Torres',  zip: '02138', dob: '1988', sex: 'F' },
+  { name: 'Harold Chen',     zip: '02140', dob: '1955', sex: 'M' },
+];
+
+function LinkageAttack() {
+  const [phase, setPhase] = useState('pre');
+
+  const doJoin = () => {
+    setPhase('matching');
+    setTimeout(() => setPhase('done'), 1000);
+  };
+  const reset = () => setPhase('pre');
+
+  return (
+    <div>
+      <p style={{ fontSize: 13.5, color: C.mute, lineHeight: 1.65, marginBottom: 14 }}>
+        Two "anonymous" datasets, harmless alone — JOIN them on ZIP + DOB + Sex and identities emerge. (Sweeney, 1997)
+      </p>
+
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 14 }}>
+        <Card style={{ padding: '11px 13px' }}>
+          <div className="mono" style={{ fontSize: 9, color: C.amber, marginBottom: 8, letterSpacing: '0.08em', fontWeight: 600 }}>
+            ANONYMOUS HEALTH RECORDS
+          </div>
+          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+            <thead>
+              <tr>
+                {['ZIP', 'DOB', 'Sex', 'Diagnosis'].map((h, j) => (
+                  <th key={h} className="mono" style={{
+                    padding: '5px 5px',
+                    textAlign: 'left',
+                    fontSize: 9,
+                    fontWeight: 600,
+                    color: phase === 'matching' && j < 3 ? C.amber : C.mute,
+                    transition: 'color 0.3s',
+                  }}>{h}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {HEALTH_RECORDS.map((r, i) => (
+                <tr key={i} style={{ borderTop: '1px solid #1e293b' }}>
+                  {[r.zip, r.dob, r.sex, r.diag].map((v, j) => {
+                    const glow = j < 3;
+                    return (
+                      <td key={j} style={{
+                        padding: '5px 5px',
+                        fontSize: 11,
+                        color: phase === 'matching' && glow ? C.amber : phase === 'done' && j === 3 ? C.red : C.mute,
+                        background: phase === 'matching' && glow ? C.amber + '22' : 'transparent',
+                        animation: phase === 'matching' && glow ? 'matchGlow 0.9s ease infinite' : 'none',
+                        transition: 'color 0.3s, background 0.3s',
+                        fontWeight: phase === 'done' && j === 3 ? 600 : 400,
+                      }}>{v}</td>
+                    );
+                  })}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </Card>
+
+        <Card style={{ padding: '11px 13px' }}>
+          <div className="mono" style={{ fontSize: 9, color: C.blue, marginBottom: 8, letterSpacing: '0.08em', fontWeight: 600 }}>
+            PUBLIC VOTER ROLLS
+          </div>
+          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+            <thead>
+              <tr>
+                {['Name', 'ZIP', 'DOB', 'Sex'].map((h, j) => (
+                  <th key={h} className="mono" style={{
+                    padding: '5px 5px',
+                    textAlign: 'left',
+                    fontSize: 9,
+                    fontWeight: 600,
+                    color: phase === 'matching' && j > 0 ? C.amber : C.mute,
+                    transition: 'color 0.3s',
+                  }}>{h}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {VOTER_ROLLS.map((r, i) => (
+                <tr key={i} style={{ borderTop: '1px solid #1e293b' }}>
+                  {[r.name, r.zip, r.dob, r.sex].map((v, j) => (
+                    <td key={j} style={{
+                      padding: '5px 5px',
+                      fontSize: 11,
+                      color: j === 0 ? C.blue : phase === 'matching' && j > 0 ? C.amber : C.mute,
+                      background: phase === 'matching' && j > 0 ? C.amber + '22' : 'transparent',
+                      animation: phase === 'matching' && j > 0 ? 'matchGlow 0.9s ease infinite' : 'none',
+                      transition: 'color 0.3s, background 0.3s',
+                      fontWeight: j === 0 ? 600 : 400,
+                    }}>{v}</td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </Card>
+      </div>
+
+      {phase === 'pre' && (
+        <Button onClick={doJoin} color={C.red}>JOIN on ZIP + DOB + Sex →</Button>
+      )}
+      {phase === 'matching' && (
+        <div style={{ textAlign: 'center', padding: '12px 0', fontSize: 13, color: C.amber, fontWeight: 600, animation: 'heartbeat 0.6s ease-in-out infinite' }}>
+          ⚡ Matching on ZIP + DOB + Sex across both datasets…
+        </div>
+      )}
+      {phase === 'done' && (
+        <div className="fade-up">
+          <Card style={{ padding: '12px 14px', border: `1px solid ${C.red}44`, background: C.red + '06', marginBottom: 12 }}>
+            <div className="mono" style={{ fontSize: 9, color: C.red, marginBottom: 8, letterSpacing: '0.08em', fontWeight: 600 }}>
+              JOINED — IDENTITIES REVEALED
+            </div>
+            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+              <thead>
+                <tr>
+                  {['Name', 'ZIP', 'Medical Diagnosis'].map(h => (
+                    <th key={h} className="mono" style={{ padding: '5px 5px', color: C.mute, fontWeight: 600, textAlign: 'left', fontSize: 9 }}>{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {HEALTH_RECORDS.map((r, i) => (
+                  <tr key={i} style={{ borderTop: '1px solid #1e293b', animation: `slideInRight 0.45s ease ${i * 0.12}s both` }}>
+                    {[VOTER_ROLLS[i].name, r.zip, r.diag].map((v, j) => (
+                      <td key={j} style={{
+                        padding: '5px 5px',
+                        fontSize: 11,
+                        color: j === 0 ? C.red : j === 2 ? '#e2e8f0' : C.mute,
+                        fontWeight: j === 0 || j === 2 ? 600 : 400,
+                      }}>{v}</td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </Card>
+          <div style={{ padding: '12px 16px', background: C.blue + '08', borderRadius: 10, borderLeft: `3px solid ${C.blue}`, fontSize: 13.5, lineHeight: 1.65, color: '#e2e8f0', marginBottom: 10 }}>
+            DP protects quasi-identifiers — making reliable cross-dataset linkage mathematically impossible.
+          </div>
+          <Button onClick={reset} ghost small color={C.gray}>↺ Reset</Button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── 2E: RE-IDENTIFICATION ATTACK (with inline SVG fallback US map) ─
+const REGION_FIPS = {
+  Northeast: [9, 23, 25, 33, 34, 36, 42, 44, 50],
+  Southeast: [1, 5, 10, 12, 13, 21, 22, 24, 28, 37, 45, 47, 51, 54],
+  Midwest:   [17, 18, 19, 20, 26, 27, 29, 31, 38, 39, 46, 55],
+  Southwest: [4, 35, 40, 48],
+  West:      [2, 6, 8, 15, 16, 30, 32, 41, 49, 53, 56],
+};
+
+function USMap({ region }) {
+  const svgRef = useRef(null);
+  const [geo, setGeo] = useState(null);
+  const [fetchFailed, setFetchFailed] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetch('https://cdn.jsdelivr.net/npm/us-atlas@3/states-10m.json')
+      .then(r => { if (!r.ok) throw new Error('fetch failed'); return r.json(); })
+      .then(data => { if (!cancelled) setGeo(data); })
+      .catch(() => { if (!cancelled) setFetchFailed(true); });
+    return () => { cancelled = true; };
+  }, []);
+
+  useEffect(() => {
+    if (!geo || !svgRef.current || typeof d3 === 'undefined' || typeof topojson === 'undefined') return;
+    const el = svgRef.current;
+    const containerWidth = el.parentElement?.offsetWidth || 520;
+    const w = Math.min(containerWidth, 600);
+    const h = Math.round(w * 0.58);
+
+    const svg = d3.select(el).attr('viewBox', `0 0 ${w} ${h}`).attr('width', '100%').attr('height', h);
+    svg.selectAll('*').remove();
+
+    const projection = d3.geoAlbersUsa().scale(w * 1.3).translate([w / 2, h / 2]);
+    const path = d3.geoPath(projection);
+    const features = topojson.feature(geo, geo.objects.states).features;
+    const activeSet = new Set(REGION_FIPS[region] || []);
+
+    svg.selectAll('path').data(features).join('path')
+      .attr('d', path)
+      .attr('fill', d => region === 'Any' ? '#2a3552' : activeSet.has(+d.id) ? '#ef4444' : '#1a2540')
+      .attr('stroke', '#0b1220')
+      .attr('stroke-width', 0.8)
+      .style('transition', 'fill 0.5s ease');
+  }, [geo, region]);
+
+  if (fetchFailed) {
+    // Fallback: simple region indicator
+    return (
+      <div style={{
+        borderRadius: 10,
+        overflow: 'hidden',
+        marginBottom: 12,
+        background: '#0a1020',
+        padding: 24,
+        textAlign: 'center',
+        border: '1px dashed ' + C.border,
+      }}>
+        <div className="mono" style={{ fontSize: 10, color: C.mute, marginBottom: 10, letterSpacing: '0.08em' }}>
+          US REGION MAP
+        </div>
+        <div style={{ fontSize: 36, marginBottom: 6 }}>🗺️</div>
+        <div style={{ fontSize: 14, color: region === 'Any' ? C.mute : C.red, fontWeight: 600 }}>
+          {region === 'Any' ? 'No region filter' : `Filtering: ${region}`}
+        </div>
+        <div style={{ fontSize: 11, color: C.mute, marginTop: 6 }}>
+          (Map assets unavailable offline — filter still works)
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div style={{ borderRadius: 10, overflow: 'hidden', marginBottom: 12, background: '#0a1020', padding: 6, border: '1px solid ' + C.border }}>
+      {!geo && (
+        <div className="mono" style={{ textAlign: 'center', padding: 24, color: C.mute, fontSize: 11, letterSpacing: '0.08em' }}>
+          LOADING US MAP…
+        </div>
+      )}
+      <svg ref={svgRef} style={{ width: '100%', display: 'block' }} />
+    </div>
+  );
+}
+
+function ReidentificationAttack() {
+  const [region, setRegion] = useState('Any');
+  const [decade, setDecade] = useState('Any');
+  const [gender, setGender] = useState('Any');
+
+  const uniqueness = (region === 'Any' ? 1 : 0.2) * (decade === 'Any' ? 1 : 1 / 7) * (gender === 'Any' ? 1 : 0.5);
+  const peoplePer1k = Math.max(1, Math.round(uniqueness * 1000));
+  const lc = uniqueness > 0.4 ? C.green : uniqueness > 0.1 ? C.amber : uniqueness > 0.02 ? C.orange : C.red;
+  const lv = uniqueness > 0.4 ? 'Low risk' : uniqueness > 0.1 ? 'Medium risk' : uniqueness > 0.02 ? 'High risk' : 'Re-ID likely';
+
+  return (
+    <div>
+      <p style={{ fontSize: 13.5, color: C.mute, lineHeight: 1.65, marginBottom: 12 }}>
+        Just 3 quasi-identifiers — region, birth decade, gender — uniquely identify 87% of Americans (Sweeney, 2000). Narrow them down and watch the map respond:
+      </p>
+
+      <USMap region={region} />
+
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: 12, marginBottom: 14 }}>
+        {[
+          ['Region', ['Any', 'Northeast', 'Southeast', 'Midwest', 'West', 'Southwest'], region, setRegion],
+          ['Birth decade', ['Any', '1940s', '1950s', '1960s', '1970s', '1980s', '1990s', '2000s'], decade, setDecade],
+          ['Gender', ['Any', 'Male', 'Female'], gender, setGender],
+        ].map(([lb, opts, val, set]) => (
+          <div key={lb}>
+            <label style={{ fontSize: 12, color: C.mute, display: 'block', marginBottom: 6, fontWeight: 500 }}>{lb}</label>
+            <select
+              value={val}
+              onChange={e => set(e.target.value)}
+              style={{
+                width: '100%', padding: '9px 12px', borderRadius: 10,
+                fontFamily: 'inherit', fontSize: 13,
+                border: '1px solid #334155', background: '#1a2540', color: '#e2e8f0',
+                cursor: 'pointer',
+              }}
+            >
+              {opts.map(o => <option key={o} value={o}>{o}</option>)}
+            </select>
+          </div>
+        ))}
+      </div>
+
+      <Card style={{ marginBottom: 12 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 14, textAlign: 'center', marginBottom: 12 }}>
+          {[
+            { l: 'In 1,000 records', v: peoplePer1k + ' people' },
+            { l: 'Risk level', v: lv, c: lc },
+            { l: 'Population share', v: Math.max(1, Math.round(uniqueness * 100)) + '%' },
+          ].map(it => (
+            <div key={it.l}>
+              <div className="mono" style={{ fontSize: 9, color: C.mute, marginBottom: 6, letterSpacing: '0.08em' }}>{it.l.toUpperCase()}</div>
+              <div style={{ fontSize: 19, fontWeight: 700, color: it.c || '#e2e8f0', transition: 'color 0.3s' }}>{it.v}</div>
+            </div>
+          ))}
+        </div>
+        <div style={{ background: '#0a1020', borderRadius: 5, height: 8, overflow: 'hidden' }}>
+          <div style={{
+            height: '100%',
+            width: Math.round((1 - Math.min(uniqueness, 1)) * 100) + '%',
+            background: `linear-gradient(90deg, ${lc}aa, ${lc})`,
+            transition: 'all 0.5s',
+            borderRadius: 5,
+            boxShadow: `0 0 8px ${lc}55`,
+          }} />
+        </div>
+      </Card>
+
+      {peoplePer1k <= 3 && (
+        <div className="fade-up" style={{ padding: '12px 16px', background: C.red + '08', borderRadius: 10, borderLeft: `3px solid ${C.red}`, fontSize: 13.5, lineHeight: 1.65, color: '#e2e8f0' }}>
+          Only ~{peoplePer1k} {peoplePer1k === 1 ? 'person' : 'people'} in 1,000 match. One more data point isolates the individual completely.
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── M2 SHELL ───────────────────────────────────────────────────────
+const ATTACKS = [
+  { id: 'diff',    label: 'Differencing',          color: C.red,    tag: 'SQL',       Cmp: DifferencingAttack,  desc: 'Two queries, one subtraction — a private value exposed.' },
+  { id: 'recon',   label: 'Reconstruction',        color: C.amber,  tag: 'Aggregate', Cmp: ReconstructionAttack,desc: 'Enough aggregate queries reconstruct raw data.' },
+  { id: 'member',  label: 'Membership Inference',  color: C.purple, tag: 'ML',        Cmp: MembershipAttack,    desc: 'Determine if a person was in an ML training set.' },
+  { id: 'linkage', label: 'Linkage Attack',        color: C.blue,   tag: 'Join',      Cmp: LinkageAttack,       desc: 'Combine two anonymous datasets to reveal identities.' },
+  { id: 'reid',    label: 'Re-identification',     color: C.orange, tag: 'Quasi-ID',  Cmp: ReidentificationAttack, desc: '3 non-sensitive attributes identify 87% of Americans.' },
+];
+
+function M2_Attacks({ onNext }) {
+  const [activeId, setActiveId] = useState('diff');
+  const attack = ATTACKS.find(a => a.id === activeId);
+  const AttackComponent = attack.Cmp;
+
+  return (
+    <div style={{ padding: '1.5rem 1.25rem', maxWidth: 1000, margin: '0 auto' }}>
+      <ModuleHeader
+        tagLabel="MODULE 2"
+        tagColor={C.red}
+        title="Privacy Attacks"
+        subtitle="Five real attack techniques DP is designed to defeat. Select one from the sidebar."
+      />
+
+      <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 200px) minmax(0, 1fr)', gap: 16, alignItems: 'start' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          {ATTACKS.map(a => {
+            const active = activeId === a.id;
+            return (
+              <button
+                key={a.id}
+                onClick={() => setActiveId(a.id)}
+                style={{
+                  padding: '12px 14px',
+                  borderRadius: 12,
+                  cursor: 'pointer',
+                  background: active ? a.color + '18' : '#0f1828',
+                  border: `1.5px solid ${active ? a.color : '#1e293b'}`,
+                  transition: 'all 0.2s',
+                  textAlign: 'left',
+                  fontFamily: 'inherit',
+                }}
+                onMouseEnter={e => { if (!active) e.currentTarget.style.background = '#14203a'; }}
+                onMouseLeave={e => { if (!active) e.currentTarget.style.background = '#0f1828'; }}
+              >
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+                  <span style={{ fontSize: 13, fontWeight: 600, color: active ? a.color : '#e2e8f0' }}>{a.label}</span>
+                  <span className="mono" style={{ fontSize: 9, padding: '2px 6px', borderRadius: 4, background: a.color + '22', color: a.color, fontWeight: 600 }}>{a.tag}</span>
+                </div>
+                <p style={{ fontSize: 11, color: C.mute, lineHeight: 1.5, margin: 0 }}>{a.desc}</p>
+              </button>
+            );
+          })}
+        </div>
+
+        <Card style={{ minHeight: 360 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, flexWrap: 'wrap', gap: 10 }}>
+            <h3 className="syne" style={{ fontSize: 17, fontWeight: 800, color: attack.color }}>{attack.label}</h3>
+            <Tag color={attack.color}>{attack.tag}</Tag>
+          </div>
+          <div key={activeId} className="fade-up">
+            <AttackComponent />
+          </div>
+        </Card>
+      </div>
+
+      <NextButton onClick={onNext} label="Next: Randomized Response →" />
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   MODULE 3 — RANDOMIZED RESPONSE (coin flip)
+   ═══════════════════════════════════════════════════════════════════ */
+const TRUE_RATE = 0.62;      // "true" population rate of YES responses
+const SIMULATION_N = 300;    // number of simulated respondents
+
+function GoldCoin({ state }) {
+  const idle = state === 'idle';
+  const colorRing = '#c89b0e';
+  const colorBg = idle ? '#334155' : '#f5c842';
+  const colorText = idle ? '#94a3b8' : '#8b6914';
+  const spinning = state === 'spinning';
+
+  return (
+    <div style={{
+      width: 86, height: 86, borderRadius: '50%',
+      background: `radial-gradient(circle at 30% 30%, ${idle ? '#475569' : '#fff4c4'}, ${colorBg})`,
+      border: `5px solid ${idle ? '#475569' : colorRing}`,
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      position: 'relative',
+      transition: 'all 0.3s',
+      animation: spinning ? 'coinFlip 1.2s cubic-bezier(.25,.46,.45,.94) forwards' : 'none',
+      boxShadow: idle ? 'none' : `0 6px 24px ${colorRing}55, inset 0 -4px 12px rgba(0,0,0,0.2)`,
+    }}>
+      {!idle && (
+        <svg viewBox="0 0 80 80" style={{ position: 'absolute', inset: 0, borderRadius: '50%' }}>
+          <circle cx={40} cy={40} r={30} fill="none" stroke={colorRing} strokeWidth={2} opacity={0.5} />
+          <circle cx={40} cy={40} r={20} fill="none" stroke={colorRing} strokeWidth={1} opacity={0.25} />
+        </svg>
+      )}
+      <span style={{
+        fontFamily: "'Syne', Georgia, serif",
+        fontSize: 34,
+        fontWeight: 800,
+        color: colorText,
+        zIndex: 1,
+        userSelect: 'none',
+        textShadow: idle ? 'none' : '0 2px 4px rgba(0,0,0,0.2)',
+      }}>
+        {state === 'heads' ? 'H' : state === 'tails' ? 'T' : '?'}
+      </span>
+    </div>
+  );
+}
+
+// Mini SVG line chart for the live dual-graph simulation
+function MiniLineChart({ points, max = 100, color, h = 56, target = null }) {
+  if (!points || points.length < 2) {
+    return (
+      <div style={{
+        height: h, background: '#0a1020',
+        borderRadius: 6, border: '1px solid ' + C.border,
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        color: C.mute, fontSize: 10,
+      }}>collecting…</div>
+    );
+  }
+  const w = 300;
+  const n = points.length;
+  const toY = v => h - (v / max) * (h - 8) - 4;
+  const coords = points.map((v, i) => ({
+    x: (i / Math.max(1, n - 1)) * w,
+    y: toY(v),
+  }));
+  const path = coords.map((p, i) => (i === 0 ? 'M' : 'L') + p.x.toFixed(1) + ',' + p.y.toFixed(1)).join(' ');
+  const fillPath = path + ` L ${w},${h} L 0,${h} Z`;
+  return (
+    <svg
+      viewBox={`0 0 ${w} ${h}`}
+      preserveAspectRatio="none"
+      style={{
+        display: 'block', width: '100%', height: h,
+        background: '#0a1020', borderRadius: 6,
+        border: '1px solid ' + C.border,
+      }}
+    >
+      {target !== null && (
+        <line
+          x1={0} x2={w}
+          y1={toY(target)} y2={toY(target)}
+          stroke={color} strokeWidth={1} strokeDasharray="3 3" opacity={0.35}
+          vectorEffect="non-scaling-stroke"
+        />
+      )}
+      <path d={fillPath} fill={color + '22'} />
+      <path d={path} fill="none" stroke={color} strokeWidth={2} vectorEffect="non-scaling-stroke" strokeLinejoin="round" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+function M3_CoinFlip({ onNext }) {
+  const [phase, setPhase] = useState('q');
+  const [answer, setAnswer] = useState(null);
+  const [coin1, setCoin1] = useState('idle');
+  const [coin2, setCoin2] = useState('idle');
+  const [submitted, setSubmitted] = useState(null);
+
+  // Simulation state
+  const [simN, setSimN] = useState(0);
+  const [simY, setSimY] = useState(0);
+  const [simTrueY, setSimTrueY] = useState(0);
+  const [simHistory, setSimHistory] = useState([]); // [{t, trueRate, reportedRate}]
+  const simTimerRef = useRef(null);
+
+  // Analyst case-study state (separate 500-person scenario with hidden truth)
+  const [analystGuess, setAnalystGuess] = useState(50);
+  const [analystSubmitted, setAnalystSubmitted] = useState(false);
+  const [caseStudy, setCaseStudy] = useState(null);
+
+  const clearSimTimer = () => {
+    if (simTimerRef.current) {
+      clearInterval(simTimerRef.current);
+      simTimerRef.current = null;
+    }
+  };
+
+  // Run the coin flip flow for the user's answer
+  const performFlip = (userAnswer) => {
+    setAnswer(userAnswer);
+    setPhase('flip');
+    setCoin1('spinning');
+    setCoin2('idle');
+    setSubmitted(null);
+
+    setTimeout(() => {
+      const r1 = Math.random() < 0.5 ? 'heads' : 'tails';
+      setCoin1(r1);
+      setTimeout(() => {
+        if (r1 === 'heads') {
+          setSubmitted(userAnswer);
+          setPhase('result');
+        } else {
+          setCoin2('spinning');
+          setTimeout(() => {
+            const r2 = Math.random() < 0.5 ? 'heads' : 'tails';
+            setCoin2(r2);
+            setTimeout(() => {
+              setSubmitted(r2 === 'heads' ? 'YES' : 'NO');
+              setPhase('result');
+            }, 900);
+          }, 450);
+        }
+      }, 1300);
+    }, 500);
+  };
+
+  // Start the large-population simulation — track both raw truth and DP reported
+  const runSimulation = () => {
+    clearSimTimer();
+    setSimN(0);
+    setSimY(0);
+    setSimTrueY(0);
+    setSimHistory([]);
+    setPhase('sim');
+    let count = 0;
+    let yes = 0;        // reported YES (noisy)
+    let trueYes = 0;    // actual YES (the no-privacy baseline)
+    simTimerRef.current = setInterval(() => {
+      // Each respondent's actual answer (what they'd say without privacy)
+      const actualYes = Math.random() < TRUE_RATE;
+      if (actualYes) trueYes++;
+
+      // Apply randomized-response coin protocol
+      const flipOne = Math.random() < 0.5;
+      let reportedYes;
+      if (flipOne) {
+        // Heads — report truth
+        reportedYes = actualYes;
+      } else {
+        // Tails — random coin for the report
+        reportedYes = Math.random() < 0.5;
+      }
+      if (reportedYes) yes++;
+      count++;
+
+      setSimN(count);
+      setSimY(yes);
+      setSimTrueY(trueYes);
+
+      // Sample history every 6 respondents (or at the end) for the mini charts
+      if (count % 6 === 0 || count === SIMULATION_N) {
+        const trueRate = trueYes / count;
+        const reportedRate = yes / count;
+        setSimHistory(prev => [...prev, {
+          t: count,
+          trueRate: trueRate * 100,
+          reportedRate: reportedRate * 100,
+        }]);
+      }
+
+      if (count >= SIMULATION_N) {
+        clearSimTimer();
+        setTimeout(() => setPhase('insight'), 500);
+      }
+    }, 14);
+  };
+
+  useEffect(() => () => clearSimTimer(), []);
+
+  // Denoise formula: p_reported = 0.5 * p_true + 0.5 * 0.5 = 0.25 + 0.5 * p_true
+  //   → p_true = 2 * (p_reported - 0.25) = 2*p_reported - 0.5
+  const rawRate = simN > 0 ? simY / simN : 0;
+  const trueRateLive = simN > 0 ? simTrueY / simN : 0;
+  const estimated = clamp(2 * rawRate - 0.5, 0, 1);
+
+  const openAnalyst = () => {
+    // Generate a fresh 500-person case study with a HIDDEN true rate
+    const hiddenRate = 0.45; // "Have you ever copied someone else's work?"
+    const caseN = 500;
+    let yes = 0, trueYes = 0;
+    for (let i = 0; i < caseN; i++) {
+      const actualYes = Math.random() < hiddenRate;
+      if (actualYes) trueYes++;
+      const flip1 = Math.random() < 0.5;
+      if (flip1) { if (actualYes) yes++; }
+      else { if (Math.random() < 0.5) yes++; }
+    }
+    setCaseStudy({
+      n: caseN,
+      reportedRate: yes / caseN,
+      trueRate: trueYes / caseN,
+    });
+    setAnalystGuess(50);
+    setAnalystSubmitted(false);
+    setPhase('analyst');
+  };
+
+  return (
+    <div style={{ padding: '1.5rem 1.25rem', maxWidth: 820, margin: '0 auto' }}>
+      <ModuleHeader
+        tagLabel="MODULE 3"
+        tagColor={C.green}
+        title="Randomized Response"
+        subtitle="The intuition behind Local DP: a coin decides whether you tell the truth. Every answer has plausible deniability."
+      />
+
+      {phase === 'q' && (
+        <div style={{ textAlign: 'center' }} className="fade-up">
+          <Card style={{ display: 'inline-block', maxWidth: 460, marginBottom: 28, padding: '26px 30px', textAlign: 'left' }}>
+            <div className="mono" style={{ fontSize: 10, color: C.mute, letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 14 }}>
+              Anonymous survey
+            </div>
+            <p style={{ fontSize: 19, fontWeight: 500, lineHeight: 1.45, color: '#e2e8f0' }}>
+              "Have you ever called in sick when you weren't actually sick?"
+            </p>
+          </Card>
+          <div style={{ display: 'flex', gap: 14, justifyContent: 'center' }}>
+            <Button onClick={() => performFlip('YES')}>YES</Button>
+            <Button onClick={() => performFlip('NO')} ghost>NO</Button>
+          </div>
+          <p style={{ fontSize: 12, color: C.mute, marginTop: 22, lineHeight: 1.6 }}>
+            Don't worry — it's an honest question and the protocol protects you either way.
+          </p>
+        </div>
+      )}
+
+      {(phase === 'flip' || phase === 'result') && (
+        <div className="fade-up">
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 16 }}>
+            <Card style={{ textAlign: 'center', padding: '18px 16px' }}>
+              <div className="mono" style={{ fontSize: 9, color: C.mute, marginBottom: 16, letterSpacing: '0.08em' }}>
+                FLIP 1 — report truthfully?
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 14 }}>
+                <GoldCoin state={coin1} />
+              </div>
+              {coin1 !== 'idle' && coin1 !== 'spinning' && (
+                <p style={{ fontSize: 12, color: coin1 === 'heads' ? C.green : C.amber, fontWeight: 600 }}>
+                  {coin1 === 'heads' ? 'Heads — use true answer' : 'Tails — flip again'}
+                </p>
+              )}
+            </Card>
+
+            {coin1 === 'tails' ? (
+              <Card style={{ textAlign: 'center', padding: '18px 16px' }}>
+                <div className="mono" style={{ fontSize: 9, color: C.mute, marginBottom: 16, letterSpacing: '0.08em' }}>
+                  FLIP 2 — random answer
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 14 }}>
+                  <GoldCoin state={coin2} />
+                </div>
+                {coin2 !== 'idle' && coin2 !== 'spinning' && (
+                  <p style={{ fontSize: 12, color: C.mute, fontWeight: 600 }}>
+                    {coin2 === 'heads' ? 'Heads → YES' : 'Tails → NO'}
+                  </p>
+                )}
+              </Card>
+            ) : (
+              <Card style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 140 }}>
+                <div style={{ textAlign: 'center' }}>
+                  <div className="syne" style={{ fontSize: 32, fontWeight: 800, color: C.green, marginBottom: 4 }}>
+                    {answer || '—'}
+                  </div>
+                  <div style={{ fontSize: 12, color: C.mute }}>your true answer</div>
+                </div>
+              </Card>
+            )}
+          </div>
+
+          {phase === 'result' && submitted && (
+            <Card style={{ background: C.blue + '08', border: `1px solid ${C.blue}33`, marginBottom: 16 }} className="fade-up">
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 14, flexWrap: 'wrap' }}>
+                <div>
+                  <div className="mono" style={{ fontSize: 9, color: C.mute, marginBottom: 6, letterSpacing: '0.08em' }}>
+                    TRANSMITTED TO SERVER
+                  </div>
+                  <div className="mono" style={{ fontSize: 26, fontWeight: 700, color: '#e2e8f0' }}>
+                    "{submitted}"
+                  </div>
+                </div>
+                <p style={{ fontSize: 13, color: C.mute, maxWidth: 280, lineHeight: 1.65 }}>
+                  Server sees <strong style={{ color: '#e2e8f0' }}>{submitted}</strong> — cannot tell if that was your true answer or the coin's choice.
+                </p>
+              </div>
+              <div style={{ marginTop: 14 }}>
+                <Button onClick={runSimulation}>See it at scale (300 people) →</Button>
+              </div>
+            </Card>
+          )}
+        </div>
+      )}
+
+      {(phase === 'sim' || phase === 'insight') && (
+        <div className="fade-up">
+          {/* DUAL LIVE GRAPHS — raw truth vs DP-reported */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 14 }}>
+            <Card style={{ padding: '14px 16px' }}>
+              <div className="mono" style={{ fontSize: 9, color: C.blue, marginBottom: 6, letterSpacing: '0.09em', fontWeight: 700 }}>
+                WHAT PEOPLE REALLY ANSWERED
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 4 }}>
+                <div className="mono" style={{ fontSize: 26, fontWeight: 700, color: '#e2e8f0' }}>
+                  {simN > 0 ? Math.round(trueRateLive * 100) + '%' : '—'}
+                </div>
+                <div style={{ fontSize: 10, color: C.mute }}>said YES</div>
+              </div>
+              <div style={{ fontSize: 10.5, color: C.mute, marginBottom: 8 }}>if there was no privacy at all</div>
+              <MiniLineChart
+                points={simHistory.map(h => h.trueRate)}
+                max={100}
+                color={C.blue}
+                target={TRUE_RATE * 100}
+              />
+            </Card>
+            <Card style={{ padding: '14px 16px' }}>
+              <div className="mono" style={{ fontSize: 9, color: C.green, marginBottom: 6, letterSpacing: '0.09em', fontWeight: 700 }}>
+                WHAT THE SERVER SEES
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 4 }}>
+                <div className="mono" style={{ fontSize: 26, fontWeight: 700, color: '#e2e8f0' }}>
+                  {simN > 0 ? Math.round(rawRate * 100) + '%' : '—'}
+                </div>
+                <div style={{ fontSize: 10, color: C.mute }}>said YES</div>
+              </div>
+              <div style={{ fontSize: 10.5, color: C.mute, marginBottom: 8 }}>after coin-flip scrambling</div>
+              <MiniLineChart
+                points={simHistory.map(h => h.reportedRate)}
+                max={100}
+                color={C.green}
+                target={(0.25 + 0.5 * TRUE_RATE) * 100}
+              />
+            </Card>
+          </div>
+
+          {/* Progress indicator */}
+          <div style={{ marginBottom: 14 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 10, color: C.mute, marginBottom: 5 }}>
+              <span className="mono" style={{ letterSpacing: '0.08em' }}>RESPONSES COLLECTED</span>
+              <span className="mono">{simN} / {SIMULATION_N}</span>
+            </div>
+            <div style={{ background: '#0a1020', borderRadius: 4, height: 6, overflow: 'hidden', border: '1px solid ' + C.border }}>
+              <div style={{
+                height: '100%',
+                width: Math.round(simN / SIMULATION_N * 100) + '%',
+                background: `linear-gradient(90deg, ${C.blue}, ${C.green})`,
+                borderRadius: 4,
+                transition: 'width 0.05s',
+              }} />
+            </div>
+          </div>
+
+          {phase === 'insight' && (
+            <div className="fade-up">
+              <Card style={{ background: C.green + '08', border: `1px solid ${C.green}33`, marginBottom: 14 }}>
+                <div style={{ fontWeight: 600, color: C.green, fontSize: 14, marginBottom: 10 }}>
+                  We can undo the scrambling — mathematically
+                </div>
+                <div style={{ fontSize: 13.5, lineHeight: 1.8, marginBottom: 12, color: '#e2e8f0' }}>
+                  The server received <strong className="mono">{Math.round(rawRate * 100)}%</strong> YES answers — but that includes all the random coin noise.
+                  <br />
+                  After removing the noise with the formula, the estimated real YES rate is <strong className="mono" style={{ color: C.green }}>~{Math.round(estimated * 100)}%</strong>.
+                  <br />
+                  <span style={{ color: C.mute }}>
+                    What people actually answered (without privacy): {Math.round(trueRateLive * 100)}%
+                  </span>
+                </div>
+                <div style={{ padding: '12px 16px', background: '#0a1020', borderRadius: 10, fontSize: 13, lineHeight: 1.7, color: '#e2e8f0' }}>
+                  The math recovers the <strong>group trend</strong> — but can <strong>never reveal</strong> whether <em>you</em> personally said YES.
+                </div>
+              </Card>
+
+              {/* ANALYST CTA */}
+              <Card style={{
+                background: `linear-gradient(135deg, ${C.purple}18, ${C.blue}08)`,
+                border: `1px solid ${C.purple}55`,
+                marginBottom: 14,
+                position: 'relative',
+                overflow: 'hidden',
+              }}>
+                <div style={{
+                  position: 'absolute', top: -12, right: -6,
+                  fontSize: 80, opacity: 0.08, transform: 'rotate(-8deg)', pointerEvents: 'none',
+                }}>🎓</div>
+                <div className="mono" style={{ fontSize: 9, color: C.purple, letterSpacing: '0.1em', marginBottom: 6, fontWeight: 700 }}>
+                  CASE STUDY CHALLENGE
+                </div>
+                <div className="syne" style={{ fontSize: 17, fontWeight: 700, color: '#e2e8f0', marginBottom: 6, position: 'relative' }}>
+                  Think you can crack a real dataset?
+                </div>
+                <p style={{ fontSize: 13, color: C.mute, lineHeight: 1.6, marginBottom: 14, position: 'relative' }}>
+                  A university surveyed 500 students about academic honesty using this exact coin-flip protocol. They've published only the scrambled results — the real rate is hidden. We'll give you the formula. Can you figure out what students actually said?
+                </p>
+                <Button onClick={openAnalyst} color={C.purple}>Take the challenge →</Button>
+              </Card>
+
+              <NextButton onClick={onNext} label="Next: The ε (Epsilon) Dial →" />
+            </div>
+          )}
+        </div>
+      )}
+
+      {phase === 'analyst' && caseStudy && (() => {
+        const csReported = Math.round(caseStudy.reportedRate * 100);
+        const csFormulaEst = Math.round(clamp(2 * caseStudy.reportedRate - 0.5, 0, 1) * 100);
+        const csActual = Math.round(caseStudy.trueRate * 100);
+        return (
+        <div className="fade-up">
+          <button
+            onClick={() => setPhase('insight')}
+            style={{
+              background: 'none', border: '1px solid ' + C.border,
+              color: C.mute, padding: '5px 12px', borderRadius: 8,
+              cursor: 'pointer', fontFamily: 'inherit', fontSize: 11,
+              marginBottom: 12,
+            }}
+          >
+            ← Back
+          </button>
+
+          {/* Case study setup */}
+          <Card style={{
+            background: `linear-gradient(135deg, ${C.purple}15, ${C.blue}08)`,
+            border: `1px solid ${C.purple}55`,
+            marginBottom: 14,
+            position: 'relative',
+            overflow: 'hidden',
+          }}>
+            <div style={{
+              position: 'absolute', top: -10, right: -8,
+              fontSize: 72, opacity: 0.08, transform: 'rotate(-8deg)', pointerEvents: 'none',
+            }}>🎓</div>
+            <div className="mono" style={{ fontSize: 9, color: C.purple, letterSpacing: '0.1em', marginBottom: 8, fontWeight: 700 }}>
+              CASE STUDY — CAMPUS ACADEMIC HONESTY SURVEY
+            </div>
+            <p style={{ fontSize: 14.5, lineHeight: 1.6, color: '#e2e8f0', marginBottom: 8, position: 'relative' }}>
+              A university surveyed <strong>{caseStudy.n} students</strong> using the coin-flip protocol. The question:
+            </p>
+            <div style={{
+              padding: '12px 16px',
+              background: '#0a1020',
+              borderRadius: 10,
+              borderLeft: `3px solid ${C.purple}`,
+              fontSize: 15,
+              fontWeight: 500,
+              color: '#e2e8f0',
+              fontStyle: 'italic',
+              lineHeight: 1.5,
+              marginBottom: 10,
+              position: 'relative',
+            }}>
+              "Have you ever submitted work that wasn't entirely your own?"
+            </div>
+            <p style={{ fontSize: 12.5, color: C.mute, lineHeight: 1.5, position: 'relative' }}>
+              The survey office published only the scrambled results. <strong style={{ color: '#e2e8f0' }}>The real rate is hidden.</strong> Your job: figure it out.
+            </p>
+          </Card>
+
+          {/* What the server published */}
+          <Card style={{ marginBottom: 14 }}>
+            <div className="mono" style={{ fontSize: 9, color: C.green, letterSpacing: '0.08em', marginBottom: 10, fontWeight: 700 }}>
+              PUBLISHED SURVEY RESULTS (all the server knows)
+            </div>
+            <div style={{ display: 'flex', gap: 22, alignItems: 'center', marginBottom: 10, flexWrap: 'wrap' }}>
+              <div>
+                <div style={{ fontSize: 11, color: C.mute }}>Students surveyed</div>
+                <div className="mono" style={{ fontSize: 24, fontWeight: 700, color: '#e2e8f0' }}>{caseStudy.n}</div>
+              </div>
+              <div>
+                <div style={{ fontSize: 11, color: C.mute }}>Server received YES</div>
+                <div className="mono" style={{ fontSize: 24, fontWeight: 700, color: C.green }}>
+                  {csReported}%
+                </div>
+              </div>
+              <div style={{ fontSize: 11, color: C.mute, fontStyle: 'italic', lineHeight: 1.4 }}>
+                Remember — this number includes<br />all the random coin-flip noise.
+              </div>
+            </div>
+            <div style={{
+              height: 16, background: '#0a1020', borderRadius: 4,
+              overflow: 'hidden', border: '1px solid ' + C.border,
+            }}>
+              <div style={{
+                height: '100%',
+                width: csReported + '%',
+                background: `linear-gradient(90deg, ${C.green}88, ${C.green})`,
+                borderRadius: 4,
+              }} />
+            </div>
+            <div className="mono" style={{ display: 'flex', justifyContent: 'space-between', marginTop: 4, fontSize: 9, color: C.mute }}>
+              <span>0%</span><span>The real YES rate is hidden somewhere below this</span><span>100%</span>
+            </div>
+          </Card>
+
+          {/* The formula */}
+          <Card style={{
+            background: `linear-gradient(180deg, ${C.purple}10, transparent)`,
+            border: `1px solid ${C.purple}44`,
+            marginBottom: 14,
+          }}>
+            <div className="mono" style={{ fontSize: 9, color: C.purple, letterSpacing: '0.1em', marginBottom: 10, fontWeight: 700 }}>
+              YOUR TOOL — THE RECONSTRUCTION FORMULA
+            </div>
+            <div style={{ fontSize: 13, lineHeight: 1.6, color: '#e2e8f0', marginBottom: 10 }}>
+              Half the answers are truthful, half are random coin flips. Because we know that split, we can work backwards:
+            </div>
+            <div style={{
+              padding: '14px 18px',
+              background: '#0a1020',
+              borderLeft: `3px solid ${C.purple}`,
+              borderRadius: 6,
+              marginBottom: 10,
+              fontFamily: "'JetBrains Mono', monospace",
+              fontSize: 13.5,
+              color: '#e2e8f0',
+              lineHeight: 2.1,
+            }}>
+              p<sub>reported</sub> = ½ · p<sub>true</sub> + ½ · ½<br />
+              <span style={{ color: C.purple, fontWeight: 700 }}>
+                p<sub>true</sub> = 2 × p<sub>reported</sub> − 0.5
+              </span>
+            </div>
+            <p style={{ fontSize: 12, color: C.mute, lineHeight: 1.5 }}>
+              Grab a notebook if you want — or just use the slider below.
+            </p>
+          </Card>
+
+          {/* Guess slider */}
+          <Card style={{ marginBottom: 14 }}>
+            <div className="mono" style={{ fontSize: 9, color: C.mute, letterSpacing: '0.08em', marginBottom: 12, fontWeight: 600 }}>
+              YOUR ANSWER
+            </div>
+            <div style={{ marginBottom: 16 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
+                <label style={{ fontSize: 13, color: '#e2e8f0' }}>
+                  What do you think the <strong>real</strong> YES rate is?
+                </label>
+                <span className="mono" style={{ fontSize: 18, color: C.purple, fontWeight: 700 }}>
+                  {analystGuess}%
+                </span>
+              </div>
+              <input
+                type="range"
+                min={0}
+                max={100}
+                step={1}
+                value={analystGuess}
+                onChange={e => { setAnalystGuess(+e.target.value); setAnalystSubmitted(false); }}
+                className="range-slider"
+              />
+              <div className="mono" style={{ display: 'flex', justifyContent: 'space-between', marginTop: 6, fontSize: 9, color: C.mute }}>
+                <span>0%</span><span>50%</span><span>100%</span>
+              </div>
+            </div>
+
+            <Button onClick={() => setAnalystSubmitted(true)} color={C.purple}>
+              Reveal the truth →
+            </Button>
+          </Card>
+
+          {analystSubmitted && (
+            <AnalystResult
+              guess={analystGuess}
+              dpEstimate={csFormulaEst}
+              actualRate={csActual}
+              rawReported={csReported}
+            />
+          )}
+
+          {analystSubmitted && (
+            <div style={{ display: 'flex', gap: 10, marginTop: 4 }}>
+              <Button onClick={openAnalyst} ghost small color={C.mute}>Try another random dataset →</Button>
+              <NextButton onClick={onNext} label="Next: The ε (Epsilon) Dial →" />
+            </div>
+          )}
+        </div>
+        );
+      })()}
+    </div>
+  );
+}
+
+function AnalystResult({ guess, dpEstimate, actualRate, rawReported }) {
+  const guessError = Math.abs(guess - actualRate);
+  const dpError = Math.abs(dpEstimate - actualRate);
+  const youNailedIt = guessError <= 2;
+  const youBeatFormula = guessError < dpError;
+
+  const rows = [
+    { lbl: '🎯 Your guess',                   val: guess,       col: C.amber, note: `${guessError}pt off` },
+    { lbl: '🧮 Formula answer',               val: dpEstimate,  col: C.green, note: `${dpError}pt off` },
+    { lbl: '📊 What people really said',       val: actualRate,  col: C.blue,  note: 'the truth' },
+    { lbl: '🔀 What the server received',      val: rawReported, col: C.mute,  note: 'scrambled by coin flips' },
+  ];
+
+  return (
+    <Card className="fade-up" style={{
+      background: `linear-gradient(180deg, ${C.purple}10, transparent)`,
+      border: `1px solid ${C.purple}55`,
+      marginBottom: 14,
+    }}>
+      <div className="mono" style={{ fontSize: 9, color: C.purple, letterSpacing: '0.1em', marginBottom: 12, fontWeight: 700 }}>
+        COMPARISON — HOW CLOSE WERE YOU?
+      </div>
+
+      {rows.map(row => (
+        <div key={row.lbl} style={{ marginBottom: 14 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 5 }}>
+            <span style={{ fontSize: 12.5, color: '#e2e8f0', fontWeight: 600 }}>{row.lbl}</span>
+            <span className="mono" style={{ fontSize: 16, fontWeight: 700, color: row.col }}>{row.val}%</span>
+          </div>
+          <div style={{
+            background: '#0a1020', borderRadius: 4, height: 16,
+            overflow: 'hidden', border: '1px solid ' + C.border,
+          }}>
+            <div style={{
+              height: '100%',
+              width: row.val + '%',
+              background: `linear-gradient(90deg, ${row.col}88, ${row.col})`,
+              borderRadius: 4,
+              transition: 'width 0.9s cubic-bezier(.2,.9,.3,1.2)',
+              boxShadow: `0 0 8px ${row.col}44`,
+            }} />
+          </div>
+          <div style={{ fontSize: 10, color: C.mute, marginTop: 3, textAlign: 'right' }}>{row.note}</div>
+        </div>
+      ))}
+
+      <div style={{
+        marginTop: 6,
+        padding: '12px 14px',
+        borderRadius: 10,
+        background: (youNailedIt || youBeatFormula ? C.green : C.purple) + '15',
+        border: `1px solid ${(youNailedIt || youBeatFormula ? C.green : C.purple)}55`,
+        fontSize: 13, color: '#e2e8f0', lineHeight: 1.65,
+      }}>
+        {youNailedIt
+          ? `🎯 Spot on — you were only ${guessError}pt away from the truth!`
+          : youBeatFormula
+            ? `⚡ Nice — you actually beat the formula this run! With only ${300} people there's some natural wobble, so a good gut feel can land close. With thousands of people, the formula always wins.`
+            : `The formula landed ${dpError}pt from the truth; your guess was ${guessError}pt off. The formula gets more accurate as the group gets larger — with thousands of people it's nearly perfect.`
+        }
+      </div>
+    </Card>
+  );
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   MODULE 4 — EPSILON DIAL
+   ═══════════════════════════════════════════════════════════════════ */
+const HOURLY_DATA = [2, 1, 1, 2, 4, 9, 22, 47, 60, 65, 61, 55, 51, 53, 58, 64, 59, 48, 38, 27, 19, 12, 7, 3]
+  .map((v, i) => ({ hour: i, value: v * 900 + 2800 }));
+const HD_MAX = Math.max(...HOURLY_DATA.map(d => d.value)) * 1.6;
+
+const PRESETS = [
+  { label: 'Google Mobility', eps: 0.44, color: '#4285f4' },
+  { label: 'Apple iOS',       eps: 2,    color: '#e85d5d' },
+  { label: 'Sweet spot',      eps: 1,    color: C.green },
+  { label: 'LinkedIn',        eps: 4,    color: '#0a66c2' },
+];
+
+const CATEGORY_MAP = [
+  { max: 0.25,     color: C.red,    text: 'Too much noise — results become meaningless' },
+  { max: 0.6,      color: C.amber,  text: 'Strong privacy, low utility' },
+  { max: 1.6,      color: C.green,  text: 'Recommended range — good balance' },
+  { max: 5,        color: C.amber,  text: 'High utility, weaker privacy' },
+  { max: Infinity, color: C.red,    text: 'Very weak privacy — nearly unprotected' },
+];
+
+function EpsilonKnob({ eps, onChange }) {
+  const svgRef = useRef(null);
+  const logMin = Math.log(0.1);
+  const logMax = Math.log(10);
+
+  // Normalize eps to [0, 1] on a log scale
+  const normalized = (Math.log(clamp(eps, 0.1, 10)) - logMin) / (logMax - logMin);
+  const angle = -135 + normalized * 270;
+  const rad = angle * Math.PI / 180;
+  const indicatorX = 50 + 26 * Math.sin(rad);
+  const indicatorY = 50 - 26 * Math.cos(rad);
+
+  const arcPath = (r, a1, a2) => {
+    const r1 = a1 * Math.PI / 180;
+    const r2 = a2 * Math.PI / 180;
+    const largeArc = (a2 - a1) > 180 ? 1 : 0;
+    return `M${50 + r * Math.sin(r1)} ${50 - r * Math.cos(r1)}A${r} ${r} 0 ${largeArc} 1 ${50 + r * Math.sin(r2)} ${50 - r * Math.cos(r2)}`;
+  };
+
+  const handleInteraction = (clientX, clientY, rect) => {
+    const cx = rect.left + rect.width / 2;
+    const cy = rect.top + rect.height / 2;
+    let a = Math.atan2(clientX - cx, -(clientY - cy)) * 180 / Math.PI;
+    a = clamp(a, -135, 135);
+    const newNorm = (a + 135) / 270;
+    const newEps = Math.exp(logMin + newNorm * (logMax - logMin));
+    onChange(+newEps.toFixed(2));
+  };
+
+  const onMouseDown = e => {
+    e.preventDefault();
+    const rect = svgRef.current.getBoundingClientRect();
+    const move = me => handleInteraction(me.clientX, me.clientY, rect);
+    const up = () => {
+      document.removeEventListener('mousemove', move);
+      document.removeEventListener('mouseup', up);
+    };
+    document.addEventListener('mousemove', move);
+    document.addEventListener('mouseup', up);
+    handleInteraction(e.clientX, e.clientY, rect);
+  };
+
+  const onTouchStart = e => {
+    e.preventDefault();
+    const rect = svgRef.current.getBoundingClientRect();
+    const move = te => {
+      const t = te.touches[0];
+      if (t) handleInteraction(t.clientX, t.clientY, rect);
+    };
+    const up = () => {
+      document.removeEventListener('touchmove', move);
+      document.removeEventListener('touchend', up);
+    };
+    document.addEventListener('touchmove', move, { passive: false });
+    document.addEventListener('touchend', up);
+    const t = e.touches[0];
+    if (t) handleInteraction(t.clientX, t.clientY, rect);
+  };
+
+  const ticks = Array.from({ length: 11 }, (_, i) => {
+    const a = (-135 + i * 27) * Math.PI / 180;
+    const major = i % 5 === 0;
+    return {
+      x1: 50 + (major ? 38 : 41) * Math.sin(a),
+      y1: 50 - (major ? 38 : 41) * Math.cos(a),
+      x2: 50 + 44 * Math.sin(a),
+      y2: 50 - 44 * Math.cos(a),
+      major,
+    };
+  });
+
+  return (
+    <svg
+      ref={svgRef}
+      viewBox="0 0 100 100"
+      style={{ width: 180, height: 180, cursor: 'grab', userSelect: 'none', touchAction: 'none' }}
+      onMouseDown={onMouseDown}
+      onTouchStart={onTouchStart}
+    >
+      <defs>
+        <radialGradient id="knobGrad" cx="50%" cy="40%" r="60%">
+          <stop offset="0%" stopColor="#3b4a6b" />
+          <stop offset="100%" stopColor="#1a2540" />
+        </radialGradient>
+        <linearGradient id="arcGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+          <stop offset="0%" stopColor={C.red} />
+          <stop offset="40%" stopColor={C.amber} />
+          <stop offset="55%" stopColor={C.green} />
+          <stop offset="80%" stopColor={C.amber} />
+          <stop offset="100%" stopColor={C.red} />
+        </linearGradient>
+      </defs>
+      <path d={arcPath(38, -135, 135)} fill="none" stroke="url(#arcGrad)" strokeWidth={4} strokeLinecap="round" opacity={0.25} />
+      {normalized > 0.01 && (
+        <path d={arcPath(38, -135, angle - 0.5)} fill="none" stroke={C.blue} strokeWidth={4.5} strokeLinecap="round" style={{ filter: `drop-shadow(0 0 4px ${C.blue}aa)` }} />
+      )}
+      {ticks.map((t, i) => (
+        <line key={i} x1={t.x1} y1={t.y1} x2={t.x2} y2={t.y2} stroke={t.major ? '#64748b' : '#475569'} strokeWidth={t.major ? 1.5 : 0.7} />
+      ))}
+      <circle cx={50} cy={50} r={30} fill="url(#knobGrad)" stroke="#475569" strokeWidth={1.5} />
+      <circle cx={50} cy={50} r={23} fill="none" stroke="#111a2e" strokeWidth={1} />
+      <line x1={50} y1={50} x2={indicatorX} y2={indicatorY} stroke={C.blue} strokeWidth={3} strokeLinecap="round" />
+      <circle cx={indicatorX} cy={indicatorY} r={4} fill={C.blue} style={{ filter: `drop-shadow(0 0 3px ${C.blue})` }} />
+      <circle cx={50} cy={50} r={3} fill="#64748b" />
+    </svg>
+  );
+}
+
+function M4_EpsilonDial({ onNext }) {
+  const [eps, setEps] = useState(1);
+  const [paused, setPaused] = useState(false);
+  const [noisyData, setNoisyData] = useState(() => HOURLY_DATA.map(d => ({ ...d })));
+  const [tick, setTick] = useState(0);
+
+  // Tick timer
+  useEffect(() => {
+    if (paused) return;
+    const delay = eps < 0.4 ? 300 : eps < 1.5 ? 600 : 1200;
+    const iv = setInterval(() => setTick(t => t + 1), delay);
+    return () => clearInterval(iv);
+  }, [eps, paused]);
+
+  // Regenerate noise on tick OR eps change (when not paused)
+  useEffect(() => {
+    if (paused) return;
+    const scale = HD_MAX * 0.30 / eps;
+    setNoisyData(HOURLY_DATA.map(d => ({
+      ...d,
+      value: Math.max(0, Math.round(d.value + laplace(scale))),
+    })));
+  }, [tick, eps, paused]);
+
+  // Compute a snapshot when paused — still reflects current eps
+  useEffect(() => {
+    if (!paused) return;
+    const scale = HD_MAX * 0.30 / eps;
+    setNoisyData(HOURLY_DATA.map(d => ({
+      ...d,
+      value: Math.max(0, Math.round(d.value + laplace(scale))),
+    })));
+  }, [paused, eps]);
+
+  const cat = CATEGORY_MAP.find(c => eps <= c.max);
+  // Log-scale privacy & utility meters — properly bounded
+  const privacyPct = clamp(Math.round(100 - (Math.log(clamp(eps, 0.1, 10)) - Math.log(0.1)) / (Math.log(10) - Math.log(0.1)) * 100), 0, 100);
+  const utilityPct = clamp(Math.round((Math.log(clamp(eps, 0.1, 10)) - Math.log(0.1)) / (Math.log(10) - Math.log(0.1)) * 100), 0, 100);
+  const barColor = eps < 0.4 ? C.red : eps < 1.5 ? C.amber : C.blue;
+
+  return (
+    <div style={{ padding: '1.5rem 1.25rem', maxWidth: 920, margin: '0 auto' }}>
+      <ModuleHeader
+        tagLabel="MODULE 4"
+        tagColor={C.blue}
+        title="The ε (Epsilon) Dial"
+        subtitle="Epsilon controls the privacy–utility tradeoff. Drag the knob — like tuning a radio between signal and static."
+      />
+
+      <div style={{ display: 'flex', gap: 10, marginBottom: 18, flexWrap: 'wrap' }}>
+        {PRESETS.map(p => {
+          const active = Math.abs(eps - p.eps) < 0.04;
+          return (
+            <button
+              key={p.label}
+              onClick={() => setEps(p.eps)}
+              style={{
+                fontFamily: 'inherit',
+                fontSize: 12,
+                fontWeight: 600,
+                padding: '7px 14px',
+                borderRadius: 22,
+                background: active ? p.color + '25' : 'transparent',
+                border: `1.5px solid ${p.color}${active ? '' : '60'}`,
+                color: p.color,
+                cursor: 'pointer',
+                transition: 'all 0.2s',
+              }}
+            >
+              {p.label} <span className="mono" style={{ opacity: 0.8 }}>(ε={p.eps})</span>
+            </button>
+          );
+        })}
+      </div>
+
+      <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) 220px', gap: 22, alignItems: 'start' }}>
+        <div>
+          <Card style={{ padding: '16px 14px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+              <span className="mono" style={{ fontSize: 10, color: C.mute, letterSpacing: '0.06em' }}>
+                Hourly visitors — Location X
+              </span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <span className="mono" style={{ fontSize: 10, color: barColor, fontWeight: 600, letterSpacing: '0.05em' }}>
+                  {eps < 0.4 ? 'HIGH NOISE' : eps < 1.5 ? 'MODERATE NOISE' : 'LOW NOISE'}
+                </span>
+                <button
+                  onClick={() => setPaused(p => !p)}
+                  style={{
+                    background: paused ? barColor + '22' : '#1e293b',
+                    border: `1px solid ${paused ? barColor : '#334155'}`,
+                    borderRadius: 7,
+                    cursor: 'pointer',
+                    padding: '4px 10px',
+                    fontSize: 11,
+                    fontFamily: 'inherit',
+                    color: paused ? barColor : C.mute,
+                    fontWeight: 600,
+                    transition: 'all 0.2s',
+                  }}
+                >
+                  {paused ? '▶ Resume' : '⏸ Pause'}
+                </button>
+              </div>
+            </div>
+
+            <svg viewBox={`0 0 ${24 * 22 + 8} 140`} style={{ width: '100%', height: 140, display: 'block' }}>
+              {HOURLY_DATA.map((d, i) => {
+                const trueHeight = Math.round((d.value / HD_MAX) * 120);
+                const noisyHeight = Math.max(2, Math.min(120, Math.round((noisyData[i].value / HD_MAX) * 120)));
+                const x = i * 22 + 4;
+                return (
+                  <g key={i}>
+                    <rect x={x} y={130 - trueHeight} width={18} height={trueHeight} fill={C.blue + '25'} rx={2} />
+                    <rect
+                      x={x}
+                      y={130 - noisyHeight}
+                      width={18}
+                      height={noisyHeight}
+                      fill={barColor}
+                      rx={2}
+                      style={{ transition: paused ? 'none' : 'y 0.3s ease, height 0.3s ease, fill 0.35s' }}
+                    />
+                  </g>
+                );
+              })}
+              {[0, 6, 12, 18, 23].map(h => (
+                <text key={h} x={h * 22 + 13} y={138} textAnchor="middle" fontSize={8} fill={C.mute} fontFamily="'JetBrains Mono', monospace">
+                  {h}h
+                </text>
+              ))}
+            </svg>
+
+            <div style={{ display: 'flex', gap: 20, marginTop: 10, fontSize: 11, color: C.mute }}>
+              {[
+                { c: C.blue + '40', t: 'True data (hidden)' },
+                { c: barColor, t: 'Released (noisy) data' },
+              ].map(it => (
+                <span key={it.t} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <span style={{ width: 12, height: 10, background: it.c, borderRadius: 2, display: 'inline-block' }} />
+                  {it.t}
+                </span>
+              ))}
+            </div>
+          </Card>
+
+          <div style={{
+            marginTop: 12,
+            padding: '12px 16px',
+            borderRadius: 10,
+            background: cat.color + '10',
+            borderLeft: `3px solid ${cat.color}`,
+            fontSize: 13.5,
+            fontWeight: 600,
+            color: cat.color,
+            minHeight: 48,
+            display: 'flex',
+            alignItems: 'center',
+            transition: 'all 0.3s',
+          }}>
+            {cat.text}
+          </div>
+        </div>
+
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16 }}>
+          <div style={{ textAlign: 'center' }}>
+            <div className="mono" style={{ fontSize: 10, color: C.mute, letterSpacing: '0.08em' }}>ε (EPSILON)</div>
+            <div className="syne" style={{ fontSize: 38, fontWeight: 800, color: C.blue, lineHeight: 1.1 }}>
+              {eps < 1 ? eps.toFixed(2) : eps.toFixed(1)}
+            </div>
+          </div>
+          <EpsilonKnob eps={eps} onChange={setEps} />
+          <div style={{ width: '100%' }}>
+            <Meter label="PRIVACY" pct={privacyPct} color={privacyPct < 20 ? C.red : privacyPct < 50 ? C.amber : C.green} />
+            <Meter label="UTILITY" pct={utilityPct} color={utilityPct < 20 ? C.red : utilityPct < 50 ? C.amber : C.green} />
+          </div>
+        </div>
+      </div>
+
+      <NextButton onClick={onNext} label="Next: Local vs Central →" />
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   MODULE 5 — LOCAL vs CENTRAL DP
+   ═══════════════════════════════════════════════════════════════════ */
+function M5_LocalCentral({ onNext }) {
+  const [step, setStep] = useState(0);
+  const [hacked, setHacked] = useState(false);
+  const animatingRef = useRef(false);
+  const timersRef = useRef([]);
+
+  const clearTimers = () => {
+    timersRef.current.forEach(t => clearTimeout(t));
+    timersRef.current = [];
+  };
+
+  const runAnimation = () => {
+    if (animatingRef.current) return;
+    animatingRef.current = true;
+    setHacked(false);
+    setStep(1);
+    timersRef.current.push(setTimeout(() => setStep(2), 750));
+    timersRef.current.push(setTimeout(() => setStep(3), 1550));
+    timersRef.current.push(setTimeout(() => {
+      setStep(4);
+      animatingRef.current = false;
+    }, 2450));
+  };
+
+  const reset = () => {
+    clearTimers();
+    animatingRef.current = false;
+    setStep(0);
+    setHacked(false);
+  };
+
+  useEffect(() => () => clearTimers(), []);
+
+  const FlowColumn = ({ local }) => {
+    const baseColor = local ? C.green : C.teal;
+    const rows = [
+      {
+        icon: '📱',
+        title: 'Your device',
+        note: local
+          ? (step >= 1 ? 'Noise added here — raw data never leaves' : 'Raw data collected')
+          : (step >= 1 ? 'Raw data packaged' : 'Raw data collected'),
+        active: step >= 1,
+      },
+      {
+        icon: local ? '🔐' : '📦',
+        title: 'Data in transit',
+        note: local ? 'Encrypted noisy packet' : '⚠ Raw packet in transit',
+        active: step >= 2,
+        warn: !local,
+      },
+      {
+        icon: hacked && step >= 4 ? '💀' : '🖥️',
+        title: hacked && step >= 4 ? 'SERVER BREACHED' : local ? 'Server receives' : 'Server receives + adds noise',
+        note: local
+          ? (hacked && step >= 4 ? 'Attacker gets: noise only 🔒' : 'Noisy data only — raw never arrives')
+          : (hacked && step >= 4 ? 'Attacker gets: RAW data ⚠' : 'Raw data in; noise added before release'),
+        active: step >= 3,
+        alert: !local && hacked && step >= 4,
+      },
+    ];
+
+    return (
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 10, minWidth: 0 }}>
+        <div style={{
+          padding: '10px 14px',
+          borderRadius: 10,
+          fontFamily: "'Syne', sans-serif",
+          fontSize: 14,
+          fontWeight: 800,
+          color: baseColor,
+          background: baseColor + '15',
+          border: `1px solid ${baseColor}44`,
+          marginBottom: 4,
+        }}>
+          {local ? 'LOCAL DP' : 'CENTRAL DP'}
+          <span style={{ fontSize: 10, fontWeight: 500, color: C.mute, marginLeft: 10, fontFamily: "'DM Sans', sans-serif" }}>
+            {local ? '(Apple, Chrome)' : '(Uber, LinkedIn)'}
+          </span>
+        </div>
+        {rows.map((r, i) => {
+          const rowColor = r.alert ? C.red : r.warn && r.active ? C.amber : baseColor;
+          const bg = r.active
+            ? (r.alert ? C.red + '15' : r.warn ? C.amber + '10' : baseColor + '10')
+            : '#0f1828';
+          return (
+            <div key={i} style={{
+              padding: '12px 14px',
+              borderRadius: 10,
+              background: bg,
+              border: `1px solid ${r.active ? rowColor + '55' : '#1e293b'}`,
+              transition: 'all 0.4s',
+              minHeight: 72,
+            }}>
+              <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
+                <span style={{ fontSize: 22, flexShrink: 0 }}>{r.icon}</span>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontSize: 12.5, fontWeight: 600, color: r.active ? rowColor : C.mute }}>{r.title}</div>
+                  {r.active && (
+                    <div className="fade-in" style={{ fontSize: 11.5, color: C.mute, marginTop: 3, lineHeight: 1.5 }}>
+                      {r.note}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    );
+  };
+
+  return (
+    <div style={{ padding: '1.5rem 1.25rem', maxWidth: 860, margin: '0 auto' }}>
+      <ModuleHeader
+        tagLabel="MODULE 5"
+        tagColor={C.teal}
+        title="Local vs Central DP"
+        subtitle="Same mathematical guarantee. Completely different trust model. The critical question: where does noise get added?"
+      />
+
+      <div style={{ display: 'flex', gap: 18, marginBottom: 16, flexWrap: 'wrap' }}>
+        <FlowColumn local={true} />
+        <FlowColumn local={false} />
+      </div>
+
+      <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginBottom: 14 }}>
+        {step === 0 && <Button onClick={runAnimation} color={C.teal}>▶ Send data — animate</Button>}
+        {step >= 4 && (
+          <>
+            <Button onClick={reset} ghost small color={C.gray}>↺ Replay</Button>
+            <Button onClick={() => setHacked(h => !h)} color={C.red} ghost={!hacked}>
+              {hacked ? 'Hide breach' : '☠ Server gets hacked — show impact'}
+            </Button>
+          </>
+        )}
+      </div>
+
+      {step >= 4 && !hacked && (
+        <Card style={{ background: C.blue + '08', border: `1px solid ${C.blue}33`, marginBottom: 12 }} className="fade-up">
+          <p style={{ fontSize: 14, lineHeight: 1.7, color: '#e2e8f0' }}>
+            Both deliver <strong>the same final output</strong> to the analyst. The difference only matters when something goes wrong — press the breach button.
+          </p>
+        </Card>
+      )}
+
+      {hacked && step >= 4 && (
+        <Card style={{ background: C.red + '08', border: `1px solid ${C.red}44`, marginBottom: 12 }} className="fade-up">
+          <p style={{ fontSize: 14.5, lineHeight: 1.65, color: C.red, fontWeight: 600, marginBottom: 8 }}>
+            Server breached.
+          </p>
+          <p style={{ fontSize: 13.5, lineHeight: 1.7, color: '#e2e8f0' }}>
+            <strong>Local DP:</strong> attacker finds only noisy data — individual values unrecoverable.
+            <br />
+            <strong>Central DP:</strong> attacker finds raw data before noise was applied — every user's true value exposed.
+          </p>
+        </Card>
+      )}
+
+      <NextButton onClick={onNext} label="Next: Privacy Budget →" />
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   MODULE 6 — PRIVACY BUDGET
+   ═══════════════════════════════════════════════════════════════════ */
+const QUERY_LIST = [
+  { id: 0, label: 'Count all trips today',      cost: 0.12, sens: 'Very low',  icon: '📊', desc: 'Millions of records — very broad',          makeResult: () => Math.round(154000 + laplace(500)) },
+  { id: 1, label: 'Trips by city',              cost: 0.28, sens: 'Low',       icon: '🗺', desc: 'Geographic breakdown across cities',         makeResult: () => Math.round(22000 + laplace(300)) },
+  { id: 2, label: 'Trips by driver age range',  cost: 0.55, sens: 'Medium',    icon: '👤', desc: 'Demographic slice — narrower',               makeResult: () => Math.round(3400 + laplace(100)) },
+  { id: 3, label: 'Trips by driver+city+hour',  cost: 1.10, sens: 'High',      icon: '🔍', desc: 'Multi-dimensional — near individual',        makeResult: () => Math.round(42 + laplace(12)) },
+  { id: 4, label: "Specific driver's weekly count", cost: 1.65, sens: 'Very high', icon: '⚠', desc: 'Near-individual level query',           makeResult: () => Math.round(7 + laplace(4)) },
+];
+const BUDGET_MAX = 3.0;
+
+function M6_Budget({ onNext }) {
+  const [budget, setBudget] = useState(BUDGET_MAX);
+  const [log, setLog] = useState([]);
+  const [locked, setLocked] = useState(false);
+  const [running, setRunning] = useState(null);
+
+  const runQuery = q => {
+    if (locked || running !== null) return;
+    if (+(budget - q.cost).toFixed(2) < 0) return;
+    setRunning(q.id);
+    setTimeout(() => {
+      const result = q.makeResult();
+      setLog(prev => [{ label: q.label, cost: q.cost, result, icon: q.icon }, ...prev]);
+      const newBudget = Math.max(0, +(budget - q.cost).toFixed(2));
+      setBudget(newBudget);
+      if (newBudget <= 0) setLocked(true);
+      setRunning(null);
+    }, 650);
+  };
+
+  const reset = () => {
+    setBudget(BUDGET_MAX);
+    setLog([]);
+    setLocked(false);
+    setRunning(null);
+  };
+
+  const budgetColor = budget > 1.5 ? C.green : budget > 0.6 ? C.amber : budget > 0 ? C.red : '#475569';
+  const lowBudget = budget < 0.6 && !locked;
+  const pctUsed = Math.round(((BUDGET_MAX - budget) / BUDGET_MAX) * 100);
+
+  return (
+    <div style={{ padding: '1.5rem 1.25rem', maxWidth: 880, margin: '0 auto' }}>
+      <ModuleHeader
+        tagLabel="MODULE 6"
+        tagColor={C.red}
+        title="Privacy Budget"
+        subtitle="Every query costs epsilon from your daily budget. When it runs out, no more queries — preventing attackers from running thousands of queries to statistically cancel out the noise."
+      />
+
+      <Card style={{ marginBottom: 16, padding: '16px 18px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+          <span style={{ fontSize: 13.5, fontWeight: 600, color: locked ? C.red : budgetColor, transition: 'color 0.3s' }}>
+            {locked ? '⛔ Budget exhausted — system locked' : 'Privacy budget remaining'}
+          </span>
+          <span className="mono" style={{ fontSize: 20, fontWeight: 700, color: locked ? C.red : budgetColor, transition: 'color 0.3s' }}>
+            {locked ? '0.00' : budget.toFixed(2)} ε
+          </span>
+        </div>
+        <div style={{ background: '#0a1020', borderRadius: 8, height: 20, overflow: 'hidden', marginBottom: 6, position: 'relative' }}>
+          <div style={{
+            height: '100%',
+            width: Math.round((budget / BUDGET_MAX) * 100) + '%',
+            background: locked ? '#475569' : `linear-gradient(90deg, ${budgetColor}cc, ${budgetColor})`,
+            transition: 'width 0.5s cubic-bezier(.2,.9,.3,1.2), background 0.4s',
+            borderRadius: 8,
+            animation: lowBudget ? 'pulse 1s ease-in-out infinite' : 'none',
+            boxShadow: locked ? 'none' : `0 0 12px ${budgetColor}66`,
+          }} />
+        </div>
+        <div className="mono" style={{ display: 'flex', justifyContent: 'space-between', fontSize: 10, color: C.mute }}>
+          <span>0</span>
+          <span>{pctUsed}% used</span>
+          <span>daily max: {BUDGET_MAX} ε</span>
+        </div>
+      </Card>
+
+      {locked && (
+        <div className="fade-up" style={{ padding: '14px 18px', borderRadius: 12, background: C.red + '08', border: `1px solid ${C.red}44`, marginBottom: 16 }}>
+          <div style={{ fontSize: 15, fontWeight: 600, color: C.red, marginBottom: 6 }}>Access denied</div>
+          <p style={{ fontSize: 13.5, color: C.mute, lineHeight: 1.65 }}>
+            Without a budget cap, an attacker could run 10,000 variations and statistically average out the noise to recover exact values. The budget expires before enough queries can accumulate to cancel DP protection.
+          </p>
+        </div>
+      )}
+
+      <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1.15fr) minmax(0, 1fr)', gap: 18, marginBottom: 14 }}>
+        <div>
+          {log.length === 0 ? (
+            <Card style={{
+              textAlign: 'center',
+              padding: '36px 20px',
+              color: C.mute,
+              fontSize: 13,
+              border: '1px dashed ' + C.border,
+              background: '#0a1020',
+            }}>
+              <div style={{ fontSize: 32, marginBottom: 10 }}>📋</div>
+              Query log empty — click a query on the right to start
+            </Card>
+          ) : (
+            <Card style={{ padding: '14px 16px', maxHeight: 320, overflowY: 'auto' }}>
+              <div className="mono" style={{ fontSize: 9, color: C.mute, marginBottom: 10, letterSpacing: '0.08em', fontWeight: 600 }}>
+                QUERY LOG
+              </div>
+              {log.map((entry, i) => (
+                <div key={i} className="slide-right" style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  padding: '9px 0',
+                  borderTop: i > 0 ? '1px solid #1e293b' : 'none',
+                  gap: 10,
+                }}>
+                  <span style={{ fontSize: 12.5, color: '#e2e8f0', flex: 1, display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <span>{entry.icon}</span>{entry.label}
+                  </span>
+                  <span className="mono" style={{ fontSize: 12, color: C.blue, flexShrink: 0, fontWeight: 600 }}>
+                    {entry.result.toLocaleString()}
+                  </span>
+                  <span className="mono" style={{ fontSize: 10, color: C.red, flexShrink: 0, fontWeight: 600 }}>
+                    −ε{entry.cost}
+                  </span>
+                </div>
+              ))}
+            </Card>
+          )}
+        </div>
+
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          {QUERY_LIST.map(q => {
+            const canRun = !locked && running === null && +(budget - q.cost).toFixed(2) >= 0;
+            const tooExpensive = !locked && running === null && +(budget - q.cost).toFixed(2) < 0;
+            const isRunning = running === q.id;
+            const costColor = q.cost > 1 ? C.red : q.cost > 0.5 ? C.amber : C.green;
+            return (
+              <button
+                key={q.id}
+                onClick={() => runQuery(q)}
+                disabled={!canRun}
+                style={{
+                  padding: '11px 13px',
+                  borderRadius: 11,
+                  cursor: canRun ? 'pointer' : 'not-allowed',
+                  border: `1px solid ${isRunning ? C.blue : canRun ? C.orange + '66' : tooExpensive ? C.red + '44' : '#1e293b'}`,
+                  background: isRunning ? C.blue + '15' : canRun ? '#0f1828' : tooExpensive ? C.red + '05' : '#0a1020',
+                  opacity: locked ? 0.4 : tooExpensive ? 0.55 : 1,
+                  transition: 'all 0.2s',
+                  textAlign: 'left',
+                  fontFamily: 'inherit',
+                  fontSize: 'inherit',
+                  color: 'inherit',
+                }}
+              >
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 3 }}>
+                  <span style={{ fontSize: 13, fontWeight: 600, color: '#e2e8f0' }}>
+                    {q.icon} {q.label}
+                  </span>
+                  <span className="mono" style={{ fontSize: 11, color: costColor, fontWeight: 700 }}>
+                    ε{q.cost}
+                  </span>
+                </div>
+                <div style={{ fontSize: 11, color: C.mute, lineHeight: 1.45 }}>
+                  {q.desc} — sensitivity: {q.sens}
+                </div>
+                {tooExpensive && (
+                  <div className="mono" style={{ fontSize: 10, color: C.red, marginTop: 4 }}>insufficient budget</div>
+                )}
+                {isRunning && (
+                  <div className="mono" style={{ fontSize: 10, color: C.blue, marginTop: 4 }}>running…</div>
+                )}
+              </button>
+            );
+          })}
+          <div style={{ marginTop: 6 }}>
+            <Button onClick={reset} ghost small color={C.gray} fullWidth>↺ Reset budget</Button>
+          </div>
+        </div>
+      </div>
+
+      <NextButton onClick={onNext} label="Next: Company Case Studies →" />
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   MODULE 7 — COMPANY CASE STUDIES
+   ═══════════════════════════════════════════════════════════════════ */
+const COMPANIES = [
+  {
+    name: 'Google',
+    emoji: '🌐',
+    color: COMPANY_COLORS.Google,
+    tag: 'Local + Central',
+    data: 'Chrome browser behavior, location history, COVID mobility patterns — billions of users across 130+ countries',
+    threat: 'Public re-identification from aggregate statistical releases',
+    algo: 'RAPPOR (Local DP, Chrome) + Laplace/Gaussian mechanism (Maps, BigQuery, COVID Reports)',
+    eps: 'ε=0.44/metric/day for COVID Mobility Reports; per-query budget in BigQuery',
+    outcome: 'COVID Mobility Reports for 130+ countries; BigQuery DP Clean Rooms; Ads Data Hub',
+  },
+  {
+    name: 'Apple',
+    emoji: '🍎',
+    color: COMPANY_COLORS.Apple,
+    tag: 'Local DP only',
+    data: 'Emoji frequency, Health app types, Safari preferences, Photos scene types, Apple Intelligence prompts',
+    threat: "Apple's own servers seeing raw user behavior — server breaches must reveal nothing",
+    algo: 'Count Mean Sketch (CMS) + Hadamard CMS for frequency estimation at scale',
+    eps: 'ε=1–2 per datum; budget resets daily',
+    outcome: 'Keyboard suggestions, Memories feature, Genmoji enhancement — all without Apple seeing individual behavior',
+  },
+  {
+    name: 'LinkedIn',
+    emoji: '💼',
+    color: COMPANY_COLORS.LinkedIn,
+    tag: 'Central DP',
+    data: 'Member professional profiles, engagement data (clicks, views, shares, demographics)',
+    threat: 'Advertisers running demographic queries that narrow results to identify individual members',
+    algo: 'Gaussian mechanism + Rényi DP composition; Privacy Loss Tracker (PLT) per member',
+    eps: 'Budget tracked per advertiser via Espresso key-value store',
+    outcome: 'Audience Engagements API, PEDAL service, PriPeARL — analytics without individual re-identification',
+  },
+  {
+    name: 'Uber',
+    emoji: '🚗',
+    color: COMPANY_COLORS.Uber,
+    tag: 'Central DP',
+    data: 'Trip records: pickup/dropoff, timestamp, distance, fare — 300 million records',
+    threat: "Uber's own internal analysts using legitimate SQL to reconstruct individual trips",
+    algo: 'CHORUS: Elastic Sensitivity + Laplace mechanism; DP embedded directly into SQL queries',
+    eps: 'Budget tracked per analyst and per use case; enforced at query time',
+    outcome: '10,000+ analyst queries/day; 93.9% query coverage; GDPR compliance; open-sourced with UC Berkeley',
+  },
+  {
+    name: 'Microsoft',
+    emoji: '🪟',
+    color: COMPANY_COLORS.Microsoft,
+    tag: 'Central DP',
+    data: 'Windows telemetry, Microsoft 365 collaboration metadata, Azure ML training datasets',
+    threat: 'Internal analytics and external data sharing revealing individual employee behavior',
+    algo: 'SmartNoise SDK: Laplace, Gaussian, Report Noisy Max, DP-SGD for ML training',
+    eps: 'Per query session; US Census used a policy-set global budget',
+    outcome: 'US Census 2020 (330M respondents protected); Workplace Analytics; SmartNoise open-sourced',
+  },
+];
+
+function M7_Companies({ onNext }) {
+  const [selected, setSelected] = useState(null);
+  const company = COMPANIES.find(c => c.name === selected);
+
+  return (
+    <div style={{ padding: '1.5rem 1.25rem', maxWidth: 960, margin: '0 auto' }}>
+      <ModuleHeader
+        tagLabel="MODULE 7"
+        tagColor={C.amber}
+        title="Industry Case Studies"
+        subtitle="Five real deployments. Click any card to explore how they built it."
+      />
+
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: 12, marginBottom: 22 }}>
+        {COMPANIES.map(co => {
+          const active = selected === co.name;
+          return (
+            <button
+              key={co.name}
+              onClick={() => setSelected(active ? null : co.name)}
+              style={{
+                padding: '18px 12px',
+                borderRadius: 14,
+                textAlign: 'center',
+                cursor: 'pointer',
+                background: active ? co.color + '20' : '#0f1828',
+                border: `2px solid ${active ? co.color : '#1e293b'}`,
+                transition: 'all 0.25s',
+                fontFamily: 'inherit',
+                transform: active ? 'translateY(-2px)' : 'none',
+                boxShadow: active ? `0 8px 24px ${co.color}33` : 'none',
+              }}
+              onMouseEnter={e => { if (!active) e.currentTarget.style.transform = 'translateY(-2px)'; }}
+              onMouseLeave={e => { if (!active) e.currentTarget.style.transform = 'none'; }}
+            >
+              <div style={{ fontSize: 32, marginBottom: 10 }}>{co.emoji}</div>
+              <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 7, color: active ? co.color : '#e2e8f0' }}>{co.name}</div>
+              <span className="mono" style={{
+                fontSize: 9,
+                padding: '3px 7px',
+                borderRadius: 4,
+                background: co.color + '22',
+                color: co.color,
+                fontWeight: 600,
+                letterSpacing: '0.05em',
+              }}>{co.tag}</span>
+            </button>
+          );
+        })}
+      </div>
+
+      <div style={{ minHeight: 280 }}>
+        {company ? (
+          <Card key={company.name} style={{ background: company.color + '06', border: `1px solid ${company.color}33` }} className="fade-up">
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 18, flexWrap: 'wrap', gap: 10 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                <span style={{ fontSize: 30 }}>{company.emoji}</span>
+                <h3 className="syne" style={{ fontSize: 22, fontWeight: 800, color: company.color }}>{company.name}</h3>
+              </div>
+              <Tag color={company.color}>{company.tag}</Tag>
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 12, marginBottom: 14 }}>
+              {[
+                { label: 'Data collected', value: company.data },
+                { label: 'Threat model',   value: company.threat },
+                { label: 'Algorithm',      value: company.algo },
+                { label: 'ε value used',   value: company.eps },
+              ].map(row => (
+                <div key={row.label} style={{ padding: '13px 16px', background: '#0a1020', borderRadius: 12, border: '1px solid #1e293b' }}>
+                  <div className="mono" style={{ fontSize: 9, color: company.color, letterSpacing: '0.07em', marginBottom: 6, fontWeight: 700 }}>
+                    {row.label.toUpperCase()}
+                  </div>
+                  <div style={{ fontSize: 13, color: '#e2e8f0', lineHeight: 1.65 }}>{row.value}</div>
+                </div>
+              ))}
+            </div>
+            <div style={{ padding: '13px 16px', background: company.color + '14', borderRadius: 12, borderLeft: `3px solid ${company.color}` }}>
+              <div className="mono" style={{ fontSize: 9, color: company.color, letterSpacing: '0.07em', marginBottom: 6, fontWeight: 700 }}>
+                OUTCOME
+              </div>
+              <div style={{ fontSize: 13.5, lineHeight: 1.7, color: '#e2e8f0' }}>{company.outcome}</div>
+            </div>
+          </Card>
+        ) : (
+          <div style={{
+            textAlign: 'center',
+            padding: '60px 20px',
+            color: C.mute,
+            fontSize: 14,
+            border: '1px dashed ' + C.border,
+            borderRadius: 14,
+          }}>
+            ↑ Select a company above to explore their DP deployment
+          </div>
+        )}
+      </div>
+
+      <NextButton onClick={onNext} label="Next: Knowledge Check →" />
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   MODULE 8 — QUIZ
+   ═══════════════════════════════════════════════════════════════════ */
+const QUIZ_POOL = [
+  { q: 'What does Differential Privacy fundamentally guarantee?',
+    o: ['No one can access the database', 'Individual contributions cannot be inferred from any output', 'All data is encrypted before storage', 'Queries are rate-limited'],
+    a: 1, e: "DP adds carefully calibrated noise to outputs so no individual's data can be detected — no matter how many queries are run." },
+  { q: 'A lower epsilon (ε=0.1) compared to ε=10 means:',
+    o: ['Faster query responses', 'Stronger privacy, noisier and less accurate results', 'Weaker privacy, more accurate results', 'No change to privacy or accuracy'],
+    a: 1, e: 'Epsilon is the privacy dial. Smaller ε means tighter guarantee and more noise. Larger ε means weaker guarantee and less noise.' },
+  { q: 'In Local DP (used by Apple), where is noise added?',
+    o: ['At the server before storage', 'In the database at query time', "On the user's device before transmission", 'In transit between device and server'],
+    a: 2, e: "Local DP: noise added on-device before data leaves. Apple's servers never see raw data — even a server breach exposes only noise." },
+  { q: 'What makes a differencing attack work?',
+    o: ['Exploiting a software vulnerability', 'Subtracting results of two queries to isolate one person', 'Brute-forcing encrypted records', 'Injecting malicious SQL code'],
+    a: 1, e: 'Run a query on a whole group, then again excluding one person, then subtract. DP adds noise to both results — the subtraction yields an uncertain, unusable value.' },
+  { q: 'What is the primary purpose of a privacy budget?',
+    o: ['Limit which users can run queries', 'Prevent unlimited queries that would cancel noise over time', 'Control how much data is stored', 'Encrypt queries before execution'],
+    a: 1, e: 'Noise can be averaged out with enough queries. The budget caps total query cost — when exhausted, no further queries are served, blocking cumulative attacks.' },
+  { q: "Uber's CHORUS system was built to protect against:",
+    o: ['External hackers', 'Government data requests', 'Internal analysts reconstructing individual trip data via SQL', 'Data corruption during storage'],
+    a: 2, e: 'CHORUS addresses the insider threat — authorized analysts with legitimate SQL access could reconstruct individual trips via differencing. CHORUS intercepts and injects noise.' },
+  { q: 'The Laplace Mechanism adds noise scaled to:',
+    o: ['The total size of the dataset', 'Sensitivity divided by epsilon (Sensitivity ÷ ε)', 'The number of queries run so far', 'A fixed amount regardless of query type'],
+    a: 1, e: 'Noise scale = Sensitivity ÷ ε. High sensitivity needs more noise. High ε (less privacy needed) means less noise. This calibration makes DP mathematically rigorous.' },
+  { q: 'Latanya Sweeney (1997) showed 87% of Americans could be re-identified using:',
+    o: ['Name and employer', 'Social security number and birthdate', 'Zip code, date of birth, and gender', 'Phone number and home address'],
+    a: 2, e: "Three quasi-identifiers are enough to isolate most individuals. DP protects even 'non-sensitive' attributes from being combined to a re-identifying precision." },
+  { q: 'Delta (δ) in (ε, δ)-DP represents:',
+    o: ['The amount of noise added', 'A small probability that the ε guarantee might fail', 'The sensitivity of the query', 'The number of users in the dataset'],
+    a: 1, e: 'δ is a small failure probability — the guarantee holds with probability 1−δ. It is typically set to a tiny value like 0.000001 as a mathematical safety valve.' },
+  { q: 'Central DP requires trusting:',
+    o: ["The user's device", 'The network provider', 'The organization collecting the data', 'A third-party auditor'],
+    a: 2, e: "In Central DP, raw data travels to the organization's servers before noise is added. If that server is breached or the organization is malicious, raw data is exposed." },
+  { q: "Which best describes a 'privacy unit'?",
+    o: ['The amount of epsilon consumed per query', 'The entity whose privacy is being protected by DP', 'The noise distribution used', 'The server that adds noise to outputs'],
+    a: 1, e: 'The privacy unit is the entity being protected — a person, device, session, or company. The DP guarantee applies at this level of granularity.' },
+  { q: "Google's RAPPOR was deployed in:",
+    o: ['Google Maps for location privacy', 'Google Chrome to privately collect browser statistics', 'Gmail to protect email contents', 'Google Search to anonymize queries'],
+    a: 1, e: 'RAPPOR is a Local DP mechanism Google built into Chrome. It lets Google learn browser statistics — most common home pages, extension IDs — without knowing any individual browser state.' },
+  { q: 'A membership inference attack determines:',
+    o: ['The exact value of a record in the dataset', "Whether a specific person's data was used to train an ML model", 'How many records are in a dataset', 'Whether a dataset has been encrypted'],
+    a: 1, e: 'ML models subtly overfit on training data. Attackers probe model confidence on specific records — training members yield higher confidence, exposing membership. DP-SGD closes this gap.' },
+  { q: 'Which company deployed DP for the 2020 US Census?',
+    o: ['Google', 'Apple', 'Microsoft (SmartNoise)', 'US Census Bureau — TopDown algorithm'],
+    a: 3, e: 'The Census Bureau built the TopDown algorithm. It protected 330M respondents — the largest real-world DP deployment in history.' },
+  { q: 'Sensitivity in DP is defined as:',
+    o: ['How many queries have been run', 'The maximum change in a query result from adding/removing one person', 'The epsilon parameter', 'The total number of users in the dataset'],
+    a: 1, e: "Sensitivity measures one person's maximum impact on a query result. High sensitivity (like totals) needs more noise. Low sensitivity (like large averages) needs very little." },
+  { q: 'Why is DP more robust than traditional anonymization?',
+    o: ['It uses stronger encryption', 'It provides mathematical guarantees that hold against any background knowledge', 'It removes more personal data', 'It requires government certification'],
+    a: 1, e: 'Traditional anonymization (name removal, k-anonymity) can often be reversed with enough auxiliary data. DP provides a mathematical bound that holds even against an attacker with unlimited background knowledge.' },
+  { q: "LinkedIn's Privacy Loss Tracker (PLT) tracks:",
+    o: ['Total data stored per member', 'Cumulative privacy budget spent per member across all queries ever run', 'The number of advertisers querying the system', 'Server uptime statistics'],
+    a: 1, e: "The PLT tracks how much total ε has been consumed for each member across every query ever run. When a member's budget is exhausted, their data is invisible to further queries." },
+  { q: "What does 'plausible deniability' mean in the context of Local DP?",
+    o: ['You can deny the database exists', 'The server cannot prove whether your answer was truthful or coin-determined', 'The company denies collecting any data', 'The government cannot request the data'],
+    a: 1, e: 'In randomized response, your answer might be true or might be a coin flip — the server can never tell which. This gives you mathematical deniability even if your answer is published.' },
+  { q: 'RAPPOR protects against repeated data collection by using:',
+    o: ['A different encryption key per query', 'A permanent memoized noise layer that never changes', 'Deleting data after 24 hours', 'Rotating servers'],
+    a: 1, e: "RAPPOR's permanent randomized response layer encodes a fixed noisy version of your value. Even with thousands of submissions, an attacker cannot average back to the truth." },
+  { q: 'In the Uber CHORUS system, where is differential privacy enforced?',
+    o: ['Inside the database engine', 'At the application level before queries are written', 'By rewriting the SQL query before it executes', 'At the network level when results are transmitted'],
+    a: 2, e: 'CHORUS intercepts SQL queries and rewrites them to embed the DP mechanism before execution. The modified query automatically enforces DP on its output — no database modifications needed.' },
+  { q: "Which epsilon value was used by Google's COVID-19 Community Mobility Reports?",
+    o: ['ε=10 per metric per day', 'ε=0.44 per metric per day', 'ε=2 per metric per day', 'ε=1 per metric per day'],
+    a: 1, e: 'Google used ε=0.44 per metric per day, with each user contributing to at most 6 metrics daily, giving a total budget of ε=2.64 per user per day — a relatively strong privacy guarantee.' },
+  { q: "What is 'elastic sensitivity' in the CHORUS system?",
+    o: ['The budget amount that stretches based on query volume', 'A data-aware approximation of local sensitivity for SQL queries with JOINs', 'The amount of noise added to elastic-search queries', 'A measure of how elastic the privacy guarantee is'],
+    a: 1, e: "Elastic Sensitivity calculates how much one person's data can swing a JOIN query result, based on the actual data structure — rather than assuming worst-case. This allows much more useful noise levels." },
+  { q: "Apple's Count Mean Sketch (CMS) is used to:",
+    o: ['Encrypt data before storage', 'Count how many users are online', 'Estimate frequency distributions in a privacy-preserving way', 'Detect fraud patterns in app usage'],
+    a: 2, e: 'CMS is a data structure for estimating how often values appear in a population. Apple uses it to find the most common emojis, health types, etc., without storing exact individual responses.' },
+  { q: 'What happens when a privacy budget is fully exhausted?',
+    o: ['The database is automatically wiped', 'No further queries are served until the budget resets', 'Query results become less accurate', 'The system switches to a backup database'],
+    a: 1, e: 'When the budget is exhausted, the system simply stops answering queries for that user or use case. This prevents attackers from running enough queries to statistically cancel out the noise.' },
+  { q: 'In a linkage attack, the attacker:',
+    o: ['Hacks into a secure database', "Combines two separately 'anonymous' datasets to reveal identities", 'Intercepts encrypted communications', 'Uses brute-force to guess passwords'],
+    a: 1, e: 'Sweeney (1997) showed that combining anonymous health records with public voter rolls — both harmless alone — can reveal sensitive medical information for specific named individuals.' },
+  { q: 'Which type of DP provides the strongest privacy guarantee against server compromise?',
+    o: ['Central DP with high epsilon', 'Federated DP', 'Local DP', 'Central DP with low epsilon'],
+    a: 2, e: 'In Local DP, noise is added on the user device before data ever leaves. Even if the server is fully compromised, the attacker only accesses already-noised data — individual values are unrecoverable.' },
+  { q: "Microsoft's SmartNoise SDK was used prominently for:",
+    o: ['Encrypting Microsoft Office documents', 'The 2020 US Census — protecting 330 million respondents', 'Securing Microsoft Azure cloud infrastructure', 'Anonymizing Bing search queries'],
+    a: 1, e: "SmartNoise (developed with Harvard IQSS) was central to the US Census Bureau's 2020 deployment — the largest real-world DP application in history, protecting all 330 million US respondents." },
+  { q: 'What is DP-SGD?',
+    o: ['A differentially private search algorithm', 'A gradient descent algorithm that adds noise to gradients during ML training', 'A data storage protocol for private databases', 'A SQL query language extension'],
+    a: 1, e: 'DP-SGD (Differentially Private Stochastic Gradient Descent) clips gradient updates and adds Laplace/Gaussian noise during model training, preventing membership inference attacks on the resulting model.' },
+  { q: "The 'composition theorem' in DP states that:",
+    o: ['DP mechanisms cannot be combined', 'Privacy budgets accumulate — running k queries costs k times more total ε', 'Adding more users improves the privacy guarantee', 'Noise cancels out with enough queries'],
+    a: 1, e: 'Each additional query costs more of the privacy budget. This is why tracking cumulative ε matters — the total privacy guarantee degrades with every additional query run on the same dataset.' },
+  { q: 'Rényi Differential Privacy (RDP) is used by LinkedIn because:',
+    o: ["It's simpler to implement than standard DP", 'It provides tighter composition bounds, allowing more useful queries within a fixed budget', 'It eliminates the need for a privacy budget', 'It works without adding any noise'],
+    a: 1, e: 'RDP tracks privacy loss more precisely than standard DP composition. LinkedIn uses it to extract significantly more useful queries from the same ε budget — higher utility at no extra privacy cost.' },
+  { q: 'Which of the following is NOT a use case for differential privacy?',
+    o: ['Publishing statistics about medical records', 'Training ML models on sensitive health data', 'Storing encrypted passwords in a database', 'Releasing demographic data from a census'],
+    a: 2, e: 'Encrypting passwords is a cryptographic operation — it protects data at rest. DP is specifically for enabling statistical analysis and ML training on sensitive data while limiting what individual records reveal.' },
+  { q: "The 'sensitivity' of the query 'COUNT(*) FROM trips' compared to 'SUM(fare) FROM trips' is:",
+    o: ['The same — both are aggregate queries', 'Higher for COUNT because it involves more records', "Higher for SUM(fare) because one person's fare can be much larger", 'Not applicable — sensitivity only applies to individual records'],
+    a: 2, e: "SUM of a numeric field has higher sensitivity because one person's extreme value (e.g., a $10,000 fare vs typical $15) could dramatically shift the result. COUNT(*) changes by at most 1 per person." },
+];
+
+function ScoreScreen({ score, total, questions, answers, onRetake }) {
+  const perfect = score === total;
+  const awful = score <= 1;
+  const great = score >= 8;
+  const ok = score >= 5;
+
+  const [remark, color] =
+    perfect ? ['🏆 Flawless. You have genuinely mastered Differential Privacy.', C.green] :
+    great   ? ['🎯 Excellent — you understand DP better than most engineers.', C.green] :
+    ok      ? ['📘 Good foundation. A few concepts worth revisiting.', C.teal] :
+    awful   ? ['😅 Don\'t worry — this is genuinely dense material. Work through the modules and come back.', C.red] :
+              ['📚 Decent start. Review the modules on the ones you missed.', C.amber];
+
+  // Confetti / animation elements
+  const confettiPieces = useMemo(() => Array.from({ length: 30 }, (_, i) => ({
+    color: [C.blue, C.green, C.amber, C.purple, C.teal, C.orange][i % 6],
+    x: 2 + Math.random() * 96,
+    delay: Math.random() * 1.4,
+    scale: 0.5 + Math.random() * 0.8,
+  })), [score]);
+
+  const sadDrops = useMemo(() => Array.from({ length: 10 }, (_, i) => ({
+    x: 5 + i * 9.5,
+    delay: i * 0.14,
+  })), [score]);
+
+  return (
+    <div style={{ padding: '1.5rem 1.25rem', maxWidth: 720, margin: '0 auto' }}>
+      <div style={{ position: 'relative', height: 80, overflow: 'hidden', marginBottom: 10 }}>
+        {perfect && confettiPieces.map((p, i) => (
+          <div key={i} style={{
+            position: 'absolute',
+            left: p.x + '%',
+            top: 0,
+            width: 10 * p.scale,
+            height: 10 * p.scale,
+            borderRadius: 2,
+            background: p.color,
+            animation: `confetti ${1.3 + p.delay}s ease-in ${p.delay * 0.2}s both`,
+          }} />
+        ))}
+        {!perfect && great && confettiPieces.slice(0, 16).map((p, i) => (
+          <div key={i} style={{
+            position: 'absolute',
+            left: p.x + '%',
+            top: 0,
+            fontSize: 18,
+            animation: `star ${1.4 + p.delay}s ease-in ${p.delay * 0.2}s both`,
+          }}>⭐</div>
+        ))}
+        {awful && sadDrops.map((p, i) => (
+          <div key={i} style={{
+            position: 'absolute',
+            left: p.x + '%',
+            top: 0,
+            fontSize: 24,
+            animation: `sadDrop ${1.5 + p.delay}s ease-in ${p.delay}s both`,
+          }}>😢</div>
+        ))}
+        {!perfect && !great && !awful && (
+          <div className="mono" style={{ textAlign: 'center', paddingTop: 26, fontSize: 10, color: C.mute, letterSpacing: '0.08em' }}>
+            RESULTS
+          </div>
+        )}
+      </div>
+
+      <Card style={{ textAlign: 'center', marginBottom: 22, padding: '28px 24px' }}>
+        <div className="syne" style={{ fontSize: 60, fontWeight: 800, color, marginBottom: 10, lineHeight: 1 }}>
+          {score}/{total}
+        </div>
+        <div style={{ display: 'flex', gap: 5, justifyContent: 'center', marginBottom: 18 }}>
+          {answers.map((a, i) => {
+            const correct = a === questions[i].a;
+            return (
+              <div key={i} style={{
+                width: 28, height: 28, borderRadius: 7,
+                background: correct ? C.green + '20' : C.red + '20',
+                border: `1.5px solid ${correct ? C.green : C.red}`,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontSize: 13, fontWeight: 700,
+                color: correct ? C.green : C.red,
+              }}>
+                {correct ? '✓' : '✗'}
+              </div>
+            );
+          })}
+        </div>
+        <p style={{ fontSize: 15, color, fontWeight: 600, maxWidth: 460, margin: '0 auto 22px' }}>{remark}</p>
+        <Button onClick={onRetake} color={C.purple} ghost>↺ Retake quiz</Button>
+      </Card>
+
+      <h3 className="syne" style={{ fontSize: 17, fontWeight: 800, marginBottom: 14, color: '#f1f5f9' }}>
+        All questions — reviewed
+      </h3>
+      {questions.map((q, qi) => {
+        const userA = answers[qi];
+        const correct = userA === q.a;
+        return (
+          <Card key={qi} style={{ marginBottom: 12, border: `1px solid ${correct ? C.green : C.red}33`, padding: '16px 18px' }}>
+            <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start', marginBottom: 12 }}>
+              <div style={{
+                width: 24, height: 24, borderRadius: '50%',
+                background: correct ? C.green : C.red,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontSize: 13, fontWeight: 700, color: '#fff',
+                flexShrink: 0, marginTop: 1,
+              }}>
+                {correct ? '✓' : '✗'}
+              </div>
+              <p style={{ fontSize: 14.5, fontWeight: 600, lineHeight: 1.5, color: '#e2e8f0' }}>
+                {qi + 1}. {q.q}
+              </p>
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 5, marginBottom: 12 }}>
+              {q.o.map((opt, oi) => {
+                const isRight = oi === q.a;
+                const isUser = oi === userA;
+                return (
+                  <div key={oi} style={{
+                    padding: '8px 13px',
+                    borderRadius: 7,
+                    background: isRight ? C.green + '12' : isUser && !isRight ? C.red + '10' : 'transparent',
+                    border: `1px solid ${isRight ? C.green : isUser && !isRight ? C.red : '#1e293b'}55`,
+                    display: 'flex',
+                    gap: 10,
+                    alignItems: 'center',
+                    fontSize: 13,
+                    color: '#e2e8f0',
+                  }}>
+                    <span className="mono" style={{ fontSize: 11, color: isRight ? C.green : isUser && !isRight ? C.red : C.mute, flexShrink: 0 }}>
+                      {String.fromCharCode(65 + oi)}.
+                    </span>
+                    <span style={{ flex: 1 }}>{opt}</span>
+                    {isRight && <span style={{ fontSize: 11, color: C.green, fontWeight: 600, flexShrink: 0 }}>✓ correct</span>}
+                    {isUser && !isRight && <span style={{ fontSize: 11, color: C.red, fontWeight: 600, flexShrink: 0 }}>← your answer</span>}
+                  </div>
+                );
+              })}
+            </div>
+            <div style={{
+              padding: '10px 14px',
+              background: (correct ? C.green : C.red) + '08',
+              borderRadius: 7,
+              borderLeft: `3px solid ${correct ? C.green : C.red}`,
+              fontSize: 12.5,
+              color: '#cbd5e1',
+              lineHeight: 1.65,
+            }}>
+              {q.e}
+            </div>
+          </Card>
+        );
+      })}
+    </div>
+  );
+}
+
+function M8_Quiz() {
+  const [phase, setPhase] = useState('splash');
+  const [questions, setQuestions] = useState([]);
+  const [qIndex, setQIndex] = useState(0);
+  const [selected, setSelected] = useState(null);
+  const [answers, setAnswers] = useState([]);
+
+  const start = () => {
+    const shuffled = [...QUIZ_POOL].sort(() => Math.random() - 0.5).slice(0, 10);
+    setQuestions(shuffled);
+    setQIndex(0);
+    setSelected(null);
+    setAnswers([]);
+    setPhase('active');
+  };
+
+  const pick = i => setSelected(i);
+
+  const next = () => {
+    const newAnswers = [...answers, selected];
+    if (qIndex >= 9) {
+      setAnswers(newAnswers);
+      setPhase('review');
+    } else {
+      setAnswers(newAnswers);
+      setQIndex(qIndex + 1);
+      setSelected(null);
+    }
+  };
+
+  if (phase === 'splash') {
+    return (
+      <div style={{ padding: '3rem 1.5rem 2rem', textAlign: 'center', maxWidth: 600, margin: '0 auto' }} className="fade-up">
+        <div style={{
+          width: 100, height: 100, borderRadius: '50%',
+          margin: '0 auto 26px',
+          background: `radial-gradient(circle, ${C.purple}22 0%, transparent 70%)`,
+          border: `2px solid ${C.purple}44`,
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          fontSize: 44,
+          boxShadow: `0 0 60px ${C.purple}33`,
+        }}>🧠</div>
+        <div style={{ marginBottom: 18 }}><Tag color={C.purple}>MODULE 8</Tag></div>
+        <h2 className="syne" style={{ fontSize: 32, fontWeight: 800, marginBottom: 20, color: '#f1f5f9' }}>
+          Think you've got it?
+        </h2>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 14, marginBottom: 36, maxWidth: 420, margin: '0 auto 36px' }}>
+          {[
+            { icon: '🎲', label: '10 random Qs' },
+            { icon: '🤫', label: 'Results at end' },
+            { icon: '📖', label: 'Full review' },
+          ].map(it => (
+            <Card key={it.label} style={{ padding: '16px 10px', textAlign: 'center' }}>
+              <div style={{ fontSize: 26, marginBottom: 8 }}>{it.icon}</div>
+              <div style={{ fontSize: 12, color: C.mute }}>{it.label}</div>
+            </Card>
+          ))}
+        </div>
+        <Button onClick={start} color={C.purple}>Let's go →</Button>
+      </div>
+    );
+  }
+
+  if (phase === 'active') {
+    const q = questions[qIndex];
+    const progressPct = Math.round(((qIndex + 1) / 10) * 100);
+    return (
+      <div style={{ padding: '1.5rem 1.25rem', maxWidth: 680, margin: '0 auto' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+          <div className="mono" style={{ fontSize: 12, color: C.mute, letterSpacing: '0.05em' }}>
+            Question {qIndex + 1} of 10
+          </div>
+          <div className="mono" style={{ fontSize: 12, color: C.purple, fontWeight: 600 }}>
+            {progressPct}%
+          </div>
+        </div>
+        <div style={{ display: 'flex', gap: 5, marginBottom: 22 }}>
+          {questions.map((_, i) => (
+            <div key={i} style={{
+              flex: 1,
+              height: 5,
+              borderRadius: 3,
+              background: i < qIndex ? C.purple : i === qIndex ? C.purple + '66' : '#1e293b',
+              transition: 'background 0.35s',
+            }} />
+          ))}
+        </div>
+        <Card key={qIndex} className="fade-up" style={{ marginBottom: 16, padding: '22px 20px' }}>
+          <p style={{ fontSize: 17, fontWeight: 500, lineHeight: 1.55, marginBottom: 20, color: '#e2e8f0' }}>
+            {q.q}
+          </p>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            {q.o.map((opt, i) => {
+              const picked = selected === i;
+              return (
+                <button
+                  key={i}
+                  onClick={() => pick(i)}
+                  style={{
+                    textAlign: 'left',
+                    padding: '13px 16px',
+                    borderRadius: 10,
+                    fontFamily: 'inherit',
+                    fontSize: 14,
+                    cursor: 'pointer',
+                    border: `1.5px solid ${picked ? C.purple : '#1e293b'}`,
+                    background: picked ? C.purple + '15' : 'transparent',
+                    color: '#e2e8f0',
+                    transition: 'all 0.18s',
+                    fontWeight: picked ? 600 : 500,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 12,
+                  }}
+                  onMouseEnter={e => { if (!picked) e.currentTarget.style.background = '#14203a'; }}
+                  onMouseLeave={e => { if (!picked) e.currentTarget.style.background = 'transparent'; }}
+                >
+                  <span style={{
+                    width: 24, height: 24, borderRadius: '50%',
+                    border: `1.5px solid ${picked ? C.purple : '#475569'}`,
+                    flexShrink: 0,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    background: picked ? C.purple : 'transparent',
+                    transition: 'all 0.18s',
+                  }}>
+                    {picked && <span style={{ width: 10, height: 10, borderRadius: '50%', background: '#fff' }} />}
+                  </span>
+                  <span style={{ flex: 1 }}>{opt}</span>
+                </button>
+              );
+            })}
+          </div>
+        </Card>
+        <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+          <Button onClick={next} disabled={selected === null} color={C.purple}>
+            {qIndex === 9 ? 'See results →' : 'Next →'}
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  if (phase === 'review') {
+    return (
+      <ScoreScreen
+        score={answers.filter((a, i) => a === questions[i].a).length}
+        total={10}
+        questions={questions}
+        answers={answers}
+        onRetake={start}
+      />
+    );
+  }
+
+  return null;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   APP SHELL — Header, module switcher, footer nav, progress tracking
+   ═══════════════════════════════════════════════════════════════════ */
+const MODULES = [
+  { label: 'Hook',        shortLabel: 'Intro',       color: C.red,    Component: M0_Hook },
+  { label: 'Glossary',    shortLabel: 'Terms',       color: C.purple, Component: M1_Glossary },
+  { label: 'Attacks',     shortLabel: 'Attacks',     color: C.red,    Component: M2_Attacks },
+  { label: 'Coin Flip',   shortLabel: 'Coin',        color: C.green,  Component: M3_CoinFlip },
+  { label: 'ε Dial',      shortLabel: 'ε Dial',      color: C.blue,   Component: M4_EpsilonDial },
+  { label: 'Local/Central', shortLabel: 'Models',    color: C.teal,   Component: M5_LocalCentral },
+  { label: 'Budget',      shortLabel: 'Budget',      color: C.orange, Component: M6_Budget },
+  { label: 'Companies',   shortLabel: 'Industry',    color: C.amber,  Component: M7_Companies },
+  { label: 'Quiz',        shortLabel: 'Quiz',        color: C.purple, Component: M8_Quiz },
+];
+
+function App() {
+  // Load progress from session storage
+  const getInitialState = () => {
+    try {
+      const saved = sessionStorage.getItem('dplearn_state');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        return {
+          mod: typeof parsed.mod === 'number' ? parsed.mod : 0,
+          visited: Array.isArray(parsed.visited) ? parsed.visited : [0],
+        };
+      }
+    } catch (e) {}
+    return { mod: 0, visited: [0] };
+  };
+
+  const initial = getInitialState();
+  const [mod, setMod] = useState(initial.mod);
+  const [visited, setVisited] = useState(initial.visited);
+
+  // Save progress to session storage
+  useEffect(() => {
+    try {
+      sessionStorage.setItem('dplearn_state', JSON.stringify({ mod, visited }));
+    } catch (e) {}
+  }, [mod, visited]);
+
+  const navigate = useCallback((newMod) => {
+    if (newMod < 0 || newMod >= MODULES.length) return;
+    setMod(newMod);
+    setVisited(prev => prev.includes(newMod) ? prev : [...prev, newMod]);
+    // Smooth scroll to top on nav change
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, []);
+
+  // Keyboard shortcuts: arrow keys
+  useEffect(() => {
+    const onKey = e => {
+      // Don't hijack input/textarea/select
+      const tag = (e.target.tagName || '').toLowerCase();
+      if (tag === 'input' || tag === 'textarea' || tag === 'select') return;
+
+      if (e.key === 'ArrowRight' && mod < MODULES.length - 1) {
+        e.preventDefault();
+        navigate(mod + 1);
+      } else if (e.key === 'ArrowLeft' && mod > 0) {
+        e.preventDefault();
+        navigate(mod - 1);
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [mod, navigate]);
+
+  const current = MODULES[mod];
+  const CurrentComponent = current.Component;
+  const progressPct = Math.round((visited.length / MODULES.length) * 100);
+
+  return (
+    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+      {/* ─── HEADER ───────────────────────────── */}
+      <header style={{
+        borderBottom: '1px solid #1e293b',
+        padding: '12px 20px',
+        background: 'rgba(11, 18, 32, 0.92)',
+        backdropFilter: 'blur(12px)',
+        WebkitBackdropFilter: 'blur(12px)',
+        position: 'sticky',
+        top: 0,
+        zIndex: 100,
+      }}>
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          flexWrap: 'wrap',
+          gap: 12,
+          maxWidth: 1100,
+          margin: '0 auto',
+        }}>
+          <div
+            onClick={() => navigate(0)}
+            style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 10 }}
+          >
+            <div style={{
+              width: 28, height: 28, borderRadius: 8,
+              background: `linear-gradient(135deg, ${C.blue}, ${C.purple})`,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              fontSize: 16,
+              boxShadow: `0 2px 12px ${C.blue}44`,
+            }}>🔐</div>
+            <div className="syne" style={{ fontSize: 17, fontWeight: 800, letterSpacing: '-0.02em' }}>
+              <span style={{ color: C.blue }}>DP</span>
+              <span style={{ color: '#e2e8f0' }}>learn</span>
+            </div>
+          </div>
+
+          <nav style={{ display: 'flex', gap: 4, flexWrap: 'wrap', justifyContent: 'center' }} className="hide-mobile">
+            {MODULES.map((m, i) => {
+              const active = mod === i;
+              const seen = visited.includes(i);
+              return (
+                <button
+                  key={i}
+                  onClick={() => navigate(i)}
+                  style={{
+                    fontFamily: 'inherit',
+                    fontSize: 11,
+                    fontWeight: 600,
+                    padding: '5px 11px',
+                    borderRadius: 20,
+                    cursor: 'pointer',
+                    transition: 'all 0.2s',
+                    background: active ? m.color + '20' : 'transparent',
+                    border: `1.5px solid ${active ? m.color : seen ? '#334155' : '#1e293b'}`,
+                    color: active ? m.color : seen ? '#cbd5e1' : C.mute,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 5,
+                  }}
+                >
+                  {seen && !active && <span style={{ fontSize: 8, color: C.green }}>●</span>}
+                  {m.shortLabel}
+                </button>
+              );
+            })}
+          </nav>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <div className="mono hide-mobile" style={{ fontSize: 10, color: C.mute, letterSpacing: '0.05em' }}>
+              {mod + 1}/{MODULES.length}
+            </div>
+            <div style={{ width: 60, height: 4, background: '#1e293b', borderRadius: 2, overflow: 'hidden' }}>
+              <div style={{
+                height: '100%',
+                width: progressPct + '%',
+                background: `linear-gradient(90deg, ${C.blue}, ${C.green})`,
+                transition: 'width 0.4s',
+                borderRadius: 2,
+              }} />
+            </div>
+          </div>
+        </div>
+
+        {/* Mobile module pills — shown on narrow screens */}
+        <div className="show-mobile" style={{ marginTop: 10, display: 'flex', gap: 4, flexWrap: 'wrap', justifyContent: 'center' }}>
+          {MODULES.map((m, i) => {
+            const active = mod === i;
+            return (
+              <button
+                key={i}
+                onClick={() => navigate(i)}
+                style={{
+                  fontFamily: 'inherit',
+                  fontSize: 10,
+                  fontWeight: 600,
+                  padding: '4px 9px',
+                  borderRadius: 20,
+                  cursor: 'pointer',
+                  background: active ? m.color + '20' : 'transparent',
+                  border: `1.5px solid ${active ? m.color : '#1e293b'}`,
+                  color: active ? m.color : C.mute,
+                }}
+              >
+                {i + 1}
+              </button>
+            );
+          })}
+        </div>
+      </header>
+
+      {/* ─── MODULE CONTENT ───────────────────────── */}
+      <main key={mod} className="fade-up" style={{ flex: 1, padding: '0 0 2rem' }}>
+        <CurrentComponent onNext={mod < MODULES.length - 1 ? () => navigate(mod + 1) : undefined} />
+      </main>
+
+      {/* ─── FOOTER NAV ───────────────────────────── */}
+      <footer style={{
+        borderTop: '1px solid #1e293b',
+        padding: '14px 20px',
+        background: 'rgba(11, 18, 32, 0.92)',
+        backdropFilter: 'blur(12px)',
+        WebkitBackdropFilter: 'blur(12px)',
+      }}>
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          maxWidth: 1100,
+          margin: '0 auto',
+          gap: 12,
+        }}>
+          <button
+            onClick={() => navigate(Math.max(0, mod - 1))}
+            disabled={mod === 0}
+            style={{
+              fontFamily: 'inherit',
+              fontSize: 13,
+              fontWeight: 600,
+              padding: '9px 18px',
+              borderRadius: 10,
+              background: 'transparent',
+              border: '1px solid #334155',
+              color: mod === 0 ? C.mute : '#cbd5e1',
+              cursor: mod === 0 ? 'not-allowed' : 'pointer',
+              opacity: mod === 0 ? 0.4 : 1,
+              transition: 'all 0.2s',
+            }}
+          >
+            ← Prev
+          </button>
+
+          <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+            {MODULES.map((m, i) => (
+              <div
+                key={i}
+                onClick={() => navigate(i)}
+                style={{
+                  width: mod === i ? 26 : 8,
+                  height: 8,
+                  borderRadius: 4,
+                  cursor: 'pointer',
+                  background: i <= mod ? m.color : '#1e293b',
+                  transition: 'all 0.35s cubic-bezier(.2,.9,.3,1.2)',
+                }}
+              />
+            ))}
+          </div>
+
+          <button
+            onClick={() => navigate(Math.min(MODULES.length - 1, mod + 1))}
+            disabled={mod === MODULES.length - 1}
+            style={{
+              fontFamily: 'inherit',
+              fontSize: 13,
+              fontWeight: 600,
+              padding: '9px 18px',
+              borderRadius: 10,
+              background: mod === MODULES.length - 1 ? 'transparent' : C.blue,
+              border: mod === MODULES.length - 1 ? '1px solid #334155' : 'none',
+              color: mod === MODULES.length - 1 ? C.mute : '#fff',
+              cursor: mod === MODULES.length - 1 ? 'not-allowed' : 'pointer',
+              opacity: mod === MODULES.length - 1 ? 0.4 : 1,
+              transition: 'all 0.2s',
+              boxShadow: mod === MODULES.length - 1 ? 'none' : `0 4px 16px ${C.blue}44`,
+            }}
+          >
+            Next →
+          </button>
+        </div>
+        <div className="mono" style={{ textAlign: 'center', marginTop: 10, fontSize: 9, color: '#475569', letterSpacing: '0.1em', textTransform: 'uppercase' }}>
+          ← → arrow keys navigate modules
+        </div>
+      </footer>
+    </div>
+  );
+}
+
+/* ─── RENDER ──────────────────────────────────────────────────── */
+const root = ReactDOM.createRoot(document.getElementById('root'));
+root.render(<App />);
+</script>
+</body>
+</html>
