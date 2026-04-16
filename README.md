@@ -28,7 +28,7 @@ No slides. No lecture. You learn by doing.
 | 3 | **Randomized Response** | Answer a sensitive question, watch the coin-flip protocol protect you, then scale it to 300 people with dual live graphs. Take the **Case Study Challenge** — apply the reconstruction formula to a hidden dataset of 500 students |
 | 4 | **The ε Dial** | Drag an interactive epsilon knob and watch noise, privacy, and utility change in real time on a 24-hour city traffic dataset |
 | 5 | **Local vs Central DP** | Animated side-by-side comparison of the two deployment models with live data-flow visualization |
-| 6 | **Privacy Budget** | Run aggregate queries against a dataset and watch your budget drain — experience firsthand why composition matters |
+| 6 | **The Secret Map** | A 4×5 grid hides one 💎. Calibrate an ε slider per peek (blurry & cheap vs crisp & expensive), drain your 2.0 ε budget, then commit to a final guess — privacy-budget composition turned into a treasure hunt |
 | 7 | **Industry Deployments** | See how Apple, Google, LinkedIn, Uber, and Microsoft deploy DP in production with detailed case cards |
 | 8 | **Quiz** | 10 randomized questions from a 32-question pool, full review with explanations, and a score screen |
 
@@ -74,6 +74,8 @@ Host `dplearn.html` anywhere that serves static files — GitHub Pages, Netlify,
 - **Dual live graphs** — The Coin Flip module shows "what people really answered" alongside "what the server sees" updating in real time, making the noise injection viscerally obvious.
 
 - **Case Study Challenge** — Instead of just showing the reconstruction formula, we generate a fresh hidden dataset (500 students, academic honesty survey) and dare you to crack it. You can retry with new random data as many times as you like.
+
+- **Privacy budget as a game** — Module 6 reframes the abstract "every query costs ε" rule as a treasure hunt. A 20-tile map, one hidden 💎, a 2.0 ε budget, and a slider that trades peek clarity against cost. When the budget runs out you must commit to a final guess — exactly the dynamic that stops a real attacker from averaging away the noise through repeated queries.
 
 - **Accessible by default** — Keyboard navigation (arrow keys), session-persisted progress, responsive layout, focus-visible states, and a dark theme that's easy on the eyes in dim lecture halls.
 
