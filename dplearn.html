@@ -2968,6 +2968,51 @@ function shuffleArr(a) {
   return arr;
 }
 
+/* Attack simulator — a chain of 'harmless' aggregate queries that
+   compose into a single-patient identification.  The budgetCap is
+   the point where a 2.0 ε privacy budget runs out, halting the attack. */
+const ATTACK_STEPS = [
+  { query: 'SELECT COUNT(*) FROM registry;',                         count: 10000, cost: 0.30, narrow: 'entire registry' },
+  { query: "WHERE age BETWEEN 45 AND 55",                             count: 2840,  cost: 0.30, narrow: 'age bracket' },
+  { query: "AND zip_prefix = '902'",                                  count: 347,   cost: 0.30, narrow: 'ZIP cluster' },
+  { query: "AND diagnosis_code LIKE 'C50%'",                          count: 89,    cost: 0.30, narrow: 'diagnosis family' },
+  { query: "AND stage = 'IIIB'",                                      count: 17,    cost: 0.35, narrow: 'disease stage' },
+  { query: "AND treatment NOT IN ('chemo','radiation')",              count: 4,     cost: 0.40, narrow: 'treatment pattern' },
+  { query: "AND insurance_status = 'uninsured' AND outcome='deceased'", count: 1,   cost: 0.40, narrow: 'single individual' },
+];
+const ATTACK_BUDGET_CAP_STEP = 5; // index at which a 2.0 ε budget is exhausted
+
+const M6_CASE_STUDIES = [
+  {
+    icon: '🏛',
+    color: '#3b82f6',
+    title: 'US Census 2020',
+    body: "The US Census Bureau shocked the research community in 2018 when it published an internal reconstruction attack on its own 2010 data. Using only the released aggregate tables — counts by block, race, age, sex — the Bureau's team re-identified 52 million Americans and matched them back to their census block with high confidence. The attack exploited no bug; it exploited the sheer number of public tables composed together. In response, the 2020 Census became the first major statistical release to deploy formal differential privacy with a hard global budget spread across all 330 million respondents. Without that cap, the same reconstruction attack would have worked on the new data.",
+    eps: 'Global ε ≈ 19.61 across the entire 2020 Census release',
+  },
+  {
+    icon: '🧬',
+    color: '#a855f7',
+    title: 'Genetic testing databases',
+    body: "Services like 23andMe, Ancestry, and GEDmatch hold DNA fingerprints for 30+ million people. Aggregate queries such as 'how many BRCA1 carriers in ZIP 94025?' sound harmless in isolation but compose brutally. A determined attacker — an insurer, an employer, an estranged relative — can narrow a rare-trait carrier down to a single household by chaining demographic filters across the dataset. Genetic data is also permanent and inherited, so one breach exposes family members who never consented to testing. DP with a strict per-user budget is the only defense that survives a malicious insider running unlimited queries against the raw database.",
+    eps: 'Research deployments typically use ε = 1 to 3 per analysis',
+  },
+  {
+    icon: '📍',
+    color: '#14b8a6',
+    title: 'Location & fitness data',
+    body: "In January 2018, Strava released a global heatmap of aggregate user activity. Within days, analysts spotted the outlines of US military bases in Syria and Afghanistan — service members jogging the perimeter of classified facilities had created thin bright lines on otherwise dark terrain. Strava had published no individual tracks, only aggregate heat. But the composition of enough heatmap tiles across enough time slices was enough to re-identify covert installations and, in some cases, name specific personnel. Modern location-aggregation services now apply per-grid and per-query ε budgets so that re-queries of the same tile cannot refine the noise away.",
+    eps: 'Typical ε = 0.5 to 2 per daily aggregate release',
+  },
+  {
+    icon: '💊',
+    color: '#f97316',
+    title: 'Pharmacy & insurance records',
+    body: "Pharmacy benefit managers and health insurers hold billions of prescription records, and prescriptions are among the most stigmatizing data we generate. HIV antivirals, psychiatric medication, opioid treatment, fertility drugs, and gender-affirming care all leak through demographic-prescription-pattern queries. An adversary with insurance or employment motive can chain age, ZIP, and drug-class filters to isolate individuals carrying legally-protected or socially-sensitive diagnoses. Even legally-mandated public-health disclosures from the CDC or state departments become attack surfaces without a budget cap. Modern privacy-preserving health analytics deploy DP with tight per-user ε to prevent exactly this kind of composition attack on mandatory aggregate reports.",
+    eps: 'Research guidelines suggest ε ≤ 1 for sensitive health releases',
+  },
+];
+
 function M6_Budget({ onNext }) {
   const [budget, setBudget]         = useState(BUDGET_MAX);
   const [sliderVal, setSliderVal]   = useState(5);
@@ -2976,6 +3021,13 @@ function M6_Budget({ onNext }) {
   const [peeks, setPeeks]           = useState([]); // {idx, eps, cost, blur}
   const [phase, setPhase]           = useState('peeking'); // 'peeking' | 'guessing' | 'revealed'
   const [guessIdx, setGuess]        = useState(null);
+
+  // Case-study unlock + attack simulator state
+  const [caseUnlocked, setCaseUnlocked] = useState(false);
+  const [attackStep, setAttackStep]     = useState(0);
+  const [attackRunning, setAttackRun]   = useState(false);
+  const [attackDone, setAttackDone]     = useState(false);
+  const attackTimerRef                  = useRef(null);
 
   const eps        = toEps(sliderVal);
   const cost       = tileCost(eps);
@@ -2990,6 +3042,40 @@ function M6_Budget({ onNext }) {
   useEffect(() => {
     if (phase === 'peeking' && outOfBudget) setPhase('guessing');
   }, [budget, phase, outOfBudget]);
+
+  // Unlock the real-world case study after the first full hunt (once, sticky)
+  useEffect(() => {
+    if (phase === 'revealed' && !caseUnlocked) setCaseUnlocked(true);
+  }, [phase, caseUnlocked]);
+
+  // Cleanup any running attack timer on unmount
+  useEffect(() => () => { if (attackTimerRef.current) clearTimeout(attackTimerRef.current); }, []);
+
+  const runAttack = () => {
+    if (attackRunning) return;
+    setAttackStep(0);
+    setAttackDone(false);
+    setAttackRun(true);
+    let i = 0;
+    const tick = () => {
+      i++;
+      setAttackStep(i);
+      if (i < ATTACK_STEPS.length) {
+        attackTimerRef.current = setTimeout(tick, 750);
+      } else {
+        setAttackRun(false);
+        setAttackDone(true);
+      }
+    };
+    attackTimerRef.current = setTimeout(tick, 650);
+  };
+
+  const resetAttack = () => {
+    if (attackTimerRef.current) clearTimeout(attackTimerRef.current);
+    setAttackStep(0);
+    setAttackRun(false);
+    setAttackDone(false);
+  };
 
   const peekFor = idx => peeks.find(p => p.idx === idx);
   const tileEmoji = i => (i === treasureIdx ? '💎' : decoys[i % decoys.length]);
@@ -3341,6 +3427,257 @@ function M6_Budget({ onNext }) {
             In a real DP system every query spends ε. Without a cap, an attacker repeats the same query 10,000 times and averages the noise away — defeating the whole protection. The budget expires before composition becomes dangerous.
           </div>
         </Card>
+      )}
+
+      {/* Locked teaser — shown before first hunt completion */}
+      {!caseUnlocked && (
+        <div style={{
+          textAlign: 'center',
+          padding: '18px 16px',
+          borderRadius: 12,
+          border: `1px dashed ${C.border}`,
+          background: '#0a1020',
+          color: C.mute,
+          fontSize: 12.5,
+          marginBottom: 14,
+        }}>
+          🔒 Finish one hunt to unlock the real-world case study.
+        </div>
+      )}
+
+      {/* ═══════════════════════════════════════════════════════════════
+          UNLOCKED — Real-World Case Study
+          ═══════════════════════════════════════════════════════════════ */}
+      {caseUnlocked && (
+        <div className="fade-up" style={{ marginTop: 22, marginBottom: 20 }}>
+
+          {/* Section intro */}
+          <div style={{ textAlign: 'center', marginBottom: 18 }}>
+            <span className="mono" style={{
+              fontSize: 10, color: C.red, letterSpacing: '0.15em',
+              fontWeight: 700, padding: '4px 12px',
+              border: `1px solid ${C.red}55`, borderRadius: 4,
+              background: C.red + '10',
+            }}>
+              REAL-WORLD CASE STUDY
+            </span>
+            <h3 className="syne" style={{
+              fontSize: 24, fontWeight: 800, marginTop: 12, marginBottom: 6,
+              color: '#f1f5f9', lineHeight: 1.2,
+            }}>
+              From Toy to Life-or-Death
+            </h3>
+            <p style={{ color: C.mute, fontSize: 13.5, lineHeight: 1.65, maxWidth: 640, margin: '0 auto' }}>
+              You just hunted a treasure. Now watch the same composition mechanic play out against a medical database — except the "treasure" is an identified patient, and the attacker doesn't need a blurry peek.
+            </p>
+          </div>
+
+          {/* Headline scenario: Medical Registry Attack */}
+          <Card style={{
+            marginBottom: 18,
+            padding: '20px 22px',
+            borderLeft: `4px solid ${C.red}`,
+            background: `linear-gradient(180deg, ${C.red}0c, transparent)`,
+          }}>
+            <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12, marginBottom: 12 }}>
+              <span style={{ fontSize: 34, lineHeight: 1 }}>🏥</span>
+              <div style={{ flex: 1 }}>
+                <div className="mono" style={{ fontSize: 9, color: C.red, letterSpacing: '0.12em', fontWeight: 700, marginBottom: 4 }}>
+                  THE MEDICAL REGISTRY ATTACK
+                </div>
+                <div className="syne" style={{ fontSize: 19, fontWeight: 700, color: '#f1f5f9', lineHeight: 1.3 }}>
+                  When aggregate queries become a personal dossier
+                </div>
+              </div>
+            </div>
+
+            <p style={{ color: '#cbd5e1', fontSize: 13.5, lineHeight: 1.7, marginBottom: 12 }}>
+              Picture a regional health registry: 10,000 de-identified patients, each row holding age, ZIP prefix, diagnosis code, treatment, insurance status, and outcome. Every day, legitimate researchers run aggregate queries against it — survival rates by stage, treatment efficacy by demographic, outcomes by region. The registry never returns <em>rows</em>, only <em>counts and averages</em>. That feels safe.
+            </p>
+
+            <p style={{ color: '#cbd5e1', fontSize: 13.5, lineHeight: 1.7, marginBottom: 14 }}>
+              Here is the problem. A single "harmless" aggregate query is indeed harmless. <strong style={{ color: '#f1f5f9' }}>Chain seven of them and the count drops to one.</strong> The attacker never saw a row — they simply asked seven questions and arrived at a specific patient by subtraction. This is the Medical Registry Attack, and it works on every unprotected aggregate database on earth.
+            </p>
+
+            {/* Attack simulator */}
+            <div style={{
+              marginTop: 14,
+              padding: '14px 16px',
+              borderRadius: 10,
+              background: '#0a1020',
+              border: `1px solid ${C.border}`,
+            }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12, gap: 10, flexWrap: 'wrap' }}>
+                <span className="mono" style={{ fontSize: 10, color: C.mute, letterSpacing: '0.1em', fontWeight: 600 }}>
+                  ATTACK SIMULATOR · {ATTACK_STEPS.length} QUERIES
+                </span>
+                <div style={{ display: 'flex', gap: 8 }}>
+                  {!attackRunning && !attackDone && attackStep === 0 && (
+                    <Button onClick={runAttack} color={C.red} small>▶ Run attack</Button>
+                  )}
+                  {attackRunning && (
+                    <Button onClick={() => {}} color={C.red} small disabled>▶ Running…</Button>
+                  )}
+                  {(attackDone || (!attackRunning && attackStep > 0)) && (
+                    <Button onClick={resetAttack} color={C.gray} ghost small>↺ Replay</Button>
+                  )}
+                </div>
+              </div>
+
+              {attackStep === 0 ? (
+                <div style={{
+                  padding: '24px 8px',
+                  textAlign: 'center',
+                  fontSize: 12,
+                  color: C.mute,
+                  fontStyle: 'italic',
+                }}>
+                  Press <span style={{ color: C.red, fontWeight: 700, fontStyle: 'normal' }}>Run attack</span> to watch seven aggregate queries compose into a one-person identification.
+                </div>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                  {ATTACK_STEPS.slice(0, attackStep).map((step, i) => {
+                    const isFinal = i === ATTACK_STEPS.length - 1;
+                    const crossedBudget = i > ATTACK_BUDGET_CAP_STEP - 1;
+                    return (
+                      <div key={i} className="slide-right" style={{
+                        display: 'grid',
+                        gridTemplateColumns: 'minmax(0,1fr) auto auto',
+                        gap: 10,
+                        padding: '8px 10px',
+                        borderRadius: 7,
+                        background: isFinal ? C.red + '18' : crossedBudget ? C.red + '08' : '#0f1828',
+                        border: `1px solid ${isFinal ? C.red + '88' : crossedBudget ? C.red + '33' : C.border}`,
+                        alignItems: 'center',
+                        animation: isFinal ? 'pulse 1.5s ease-in-out infinite' : 'none',
+                      }}>
+                        <span className="mono" style={{
+                          fontSize: 10.5, color: '#cbd5e1',
+                          overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                        }}>
+                          <span style={{ color: C.mute }}>Q{i+1}·</span> {step.query}
+                        </span>
+                        <span className="mono" style={{ fontSize: 11, color: isFinal ? C.red : crossedBudget ? C.red : C.teal, fontWeight: 700, whiteSpace: 'nowrap' }}>
+                          → {step.count.toLocaleString()}
+                        </span>
+                        <span className="mono" style={{ fontSize: 10, color: C.amber, fontWeight: 700, whiteSpace: 'nowrap' }}>
+                          −ε{step.cost.toFixed(2)}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+
+              {attackDone && (
+                <div className="fade-up" style={{
+                  marginTop: 14,
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
+                  gap: 10,
+                }}>
+                  <div style={{
+                    padding: '14px',
+                    borderRadius: 10,
+                    background: C.red + '15',
+                    border: `1px solid ${C.red}66`,
+                  }}>
+                    <div className="mono" style={{ fontSize: 9, color: C.red, letterSpacing: '0.1em', fontWeight: 700, marginBottom: 6 }}>
+                      WITHOUT DP BUDGET
+                    </div>
+                    <div style={{ fontSize: 14, color: '#f1f5f9', fontWeight: 700, marginBottom: 4 }}>
+                      🎯 Patient identified
+                    </div>
+                    <div style={{ fontSize: 11.5, color: C.mute, lineHeight: 1.5 }}>
+                      7 queries. 2.45 ε "spent" (but nothing is tracking it). The registry truthfully answered every question and exposed a single individual's ZIP, diagnosis, treatment refusal, uninsured status, and outcome.
+                    </div>
+                  </div>
+                  <div style={{
+                    padding: '14px',
+                    borderRadius: 10,
+                    background: C.green + '15',
+                    border: `1px solid ${C.green}66`,
+                  }}>
+                    <div className="mono" style={{ fontSize: 9, color: C.green, letterSpacing: '0.1em', fontWeight: 700, marginBottom: 6 }}>
+                      WITH DP BUDGET (ε=2.0)
+                    </div>
+                    <div style={{ fontSize: 14, color: '#f1f5f9', fontWeight: 700, marginBottom: 4 }}>
+                      ⛔ Halted at Q{ATTACK_BUDGET_CAP_STEP}
+                    </div>
+                    <div style={{ fontSize: 11.5, color: C.mute, lineHeight: 1.5 }}>
+                      The registry rejected queries 6 and 7 outright — budget exhausted. Attacker is left with 17 possible patients, ambiguous enough to protect every individual in that set.
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          </Card>
+
+          {/* Four full-paragraph cards — where this pattern lives in production */}
+          <div className="mono" style={{
+            fontSize: 10, color: C.mute, letterSpacing: '0.14em',
+            fontWeight: 600, marginBottom: 14, textAlign: 'center',
+          }}>
+            ── WHERE THIS PATTERN LIVES IN PRODUCTION ──
+          </div>
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
+            gap: 12,
+            marginBottom: 18,
+          }}>
+            {M6_CASE_STUDIES.map((cs, i) => (
+              <Card key={i} style={{
+                padding: '18px 20px',
+                borderLeft: `3px solid ${cs.color}`,
+                background: `linear-gradient(180deg, ${cs.color}07, transparent)`,
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
+                  <span style={{ fontSize: 26, lineHeight: 1 }}>{cs.icon}</span>
+                  <div className="syne" style={{ fontSize: 16, fontWeight: 700, color: '#f1f5f9', lineHeight: 1.25 }}>
+                    {cs.title}
+                  </div>
+                </div>
+                <p style={{ fontSize: 12.5, color: '#cbd5e1', lineHeight: 1.7, marginBottom: 12 }}>
+                  {cs.body}
+                </p>
+                <div style={{
+                  padding: '7px 11px',
+                  borderRadius: 6,
+                  background: cs.color + '15',
+                  border: `1px solid ${cs.color}44`,
+                  fontSize: 11,
+                  color: '#cbd5e1',
+                  fontWeight: 500,
+                }}>
+                  <span className="mono" style={{ color: cs.color, fontWeight: 700 }}>ε in practice · </span>
+                  {cs.eps}
+                </div>
+              </Card>
+            ))}
+          </div>
+
+          {/* Clinching takeaway */}
+          <Card style={{
+            textAlign: 'center',
+            padding: '22px 26px',
+            background: `linear-gradient(180deg, ${C.amber}10, transparent)`,
+            border: `1px solid ${C.amber}55`,
+          }}>
+            <div style={{ fontSize: 32, marginBottom: 8 }}>💡</div>
+            <div className="syne" style={{
+              fontSize: 17,
+              fontWeight: 700,
+              color: '#f1f5f9',
+              lineHeight: 1.55,
+              fontStyle: 'italic',
+              maxWidth: 640,
+              margin: '0 auto',
+            }}>
+              "The budget isn't about trusting researchers. It's about math. Even a benevolent researcher asking 200 good questions accidentally builds a dossier."
+            </div>
+          </Card>
+        </div>
       )}
 
       <NextButton onClick={onNext} label="Next: Company Case Studies →" />
