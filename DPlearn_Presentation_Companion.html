@@ -1,0 +1,857 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>DPlearn — Presentation Companion</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:ital,wght@0,400;0,500;0,600;1,400&family=JetBrains+Mono:wght@400;600&display=swap');
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --blue:   #2563eb;
+    --red:    #dc2626;
+    --green:  #16a34a;
+    --amber:  #d97706;
+    --purple: #9333ea;
+    --teal:   #0d9488;
+    --orange: #ea580c;
+    --gray:   #64748b;
+    --ink:    #1e293b;
+    --muted:  #64748b;
+    --rule:   #e2e8f0;
+    --bg:     #f8fafc;
+    --card:   #ffffff;
+  }
+
+  body {
+    font-family: 'DM Sans', 'Helvetica Neue', Arial, sans-serif;
+    font-size: 14.5px;
+    line-height: 1.75;
+    color: var(--ink);
+    background: var(--bg);
+    padding: 0 0 80px;
+  }
+
+  /* ── Cover ── */
+  .cover {
+    background: linear-gradient(135deg, #0f172a 0%, #1e3a5f 60%, #0f172a 100%);
+    color: #fff;
+    padding: 72px 60px 80px;
+    position: relative;
+    overflow: hidden;
+  }
+  .cover::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse at 80% 30%, rgba(59,130,246,0.18), transparent 60%);
+    pointer-events: none;
+  }
+  .cover-tag {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.18em;
+    color: #60a5fa;
+    font-weight: 600;
+    margin-bottom: 20px;
+    text-transform: uppercase;
+  }
+  .cover h1 {
+    font-family: 'Syne', sans-serif;
+    font-size: 46px;
+    font-weight: 800;
+    line-height: 1.1;
+    color: #f1f5f9;
+    margin-bottom: 16px;
+    letter-spacing: -0.03em;
+  }
+  .cover h1 span { color: #60a5fa; }
+  .cover-sub {
+    font-size: 16.5px;
+    color: #94a3b8;
+    line-height: 1.65;
+    max-width: 580px;
+    margin-bottom: 36px;
+  }
+  .cover-meta {
+    display: flex;
+    gap: 32px;
+    flex-wrap: wrap;
+  }
+  .cover-meta-item {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: #64748b;
+    letter-spacing: 0.08em;
+  }
+  .cover-meta-item span { color: #94a3b8; display: block; font-size: 13px; font-family: 'DM Sans', sans-serif; letter-spacing: 0; margin-top: 3px; }
+
+  /* ── Layout ── */
+  .page { max-width: 860px; margin: 0 auto; padding: 0 40px; }
+
+  /* ── TOC ── */
+  .toc {
+    background: var(--card);
+    border: 1px solid var(--rule);
+    border-radius: 14px;
+    padding: 30px 36px;
+    margin: 40px auto;
+    max-width: 860px;
+  }
+  .toc h2 { font-family: 'Syne', sans-serif; font-size: 18px; font-weight: 800; color: var(--ink); margin-bottom: 18px; }
+  .toc ol { padding-left: 22px; }
+  .toc li { margin-bottom: 7px; font-size: 14px; color: var(--ink); }
+  .toc li a { color: var(--blue); text-decoration: none; font-weight: 500; }
+  .toc li a:hover { text-decoration: underline; }
+  .toc .sub { margin-top: 4px; padding-left: 18px; font-size: 12.5px; color: var(--muted); }
+
+  /* ── Section headings ── */
+  .section-header {
+    border-top: 3px solid var(--rule);
+    padding-top: 42px;
+    margin-top: 52px;
+    margin-bottom: 28px;
+  }
+  .section-tag {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10.5px;
+    letter-spacing: 0.16em;
+    font-weight: 600;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 4px;
+  }
+  .section-header h2 {
+    font-family: 'Syne', sans-serif;
+    font-size: 30px;
+    font-weight: 800;
+    line-height: 1.15;
+    color: var(--ink);
+    margin-bottom: 10px;
+    letter-spacing: -0.02em;
+  }
+  .section-header p {
+    color: var(--muted);
+    font-size: 14px;
+    line-height: 1.65;
+    max-width: 660px;
+  }
+
+  h3 {
+    font-family: 'Syne', sans-serif;
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--ink);
+    margin: 30px 0 10px;
+    letter-spacing: -0.01em;
+  }
+  h4 {
+    font-size: 14.5px;
+    font-weight: 600;
+    color: var(--ink);
+    margin: 22px 0 7px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    font-family: 'JetBrains Mono', monospace;
+  }
+  p { margin-bottom: 14px; }
+  ul, ol { padding-left: 22px; margin-bottom: 14px; }
+  li { margin-bottom: 5px; }
+  strong { font-weight: 600; color: var(--ink); }
+  em { font-style: italic; color: var(--muted); }
+
+  /* ── Cards ── */
+  .card {
+    background: var(--card);
+    border: 1px solid var(--rule);
+    border-radius: 12px;
+    padding: 20px 24px;
+    margin-bottom: 16px;
+  }
+  .card-accent { border-left: 4px solid; }
+
+  /* ── Module card ── */
+  .module-row {
+    display: grid;
+    grid-template-columns: 52px 1fr;
+    gap: 0;
+    align-items: start;
+    background: var(--card);
+    border: 1px solid var(--rule);
+    border-radius: 12px;
+    padding: 16px 20px;
+    margin-bottom: 10px;
+  }
+  .module-num {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 28px;
+    font-weight: 600;
+    line-height: 1;
+    padding-top: 2px;
+  }
+  .module-body {}
+  .module-title { font-family: 'Syne', sans-serif; font-size: 16px; font-weight: 700; margin-bottom: 4px; }
+  .module-dur {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.08em;
+    color: var(--muted);
+    font-weight: 600;
+    margin-bottom: 6px;
+  }
+  .module-desc { font-size: 13.5px; color: #334155; line-height: 1.65; margin-bottom: 8px; }
+  .module-tips { font-size: 12.5px; color: var(--muted); }
+  .module-tips strong { color: var(--ink); }
+  .tip-list { list-style: none; padding: 0; }
+  .tip-list li::before { content: '→ '; color: var(--blue); font-weight: 700; }
+  .tip-list li { margin-bottom: 4px; }
+
+  /* ── Callout boxes ── */
+  .callout {
+    border-radius: 10px;
+    padding: 14px 18px;
+    margin-bottom: 16px;
+    font-size: 13.5px;
+    line-height: 1.65;
+  }
+  .callout-blue   { background: #eff6ff; border-left: 4px solid #2563eb; }
+  .callout-red    { background: #fef2f2; border-left: 4px solid #dc2626; }
+  .callout-green  { background: #f0fdf4; border-left: 4px solid #16a34a; }
+  .callout-amber  { background: #fffbeb; border-left: 4px solid #d97706; }
+  .callout-purple { background: #faf5ff; border-left: 4px solid #9333ea; }
+  .callout-teal   { background: #f0fdfa; border-left: 4px solid #0d9488; }
+  .callout .label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    margin-bottom: 5px;
+    display: block;
+  }
+
+  /* ── Math / code blocks ── */
+  .math-block {
+    background: #1e293b;
+    border-radius: 10px;
+    padding: 18px 22px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    color: #e2e8f0;
+    line-height: 1.9;
+    margin: 16px 0 20px;
+    overflow-x: auto;
+  }
+  .math-block .comment { color: #64748b; }
+  .math-block .highlight { color: #60a5fa; font-weight: 600; }
+  .math-block .result { color: #4ade80; font-weight: 600; }
+  .math-block .formula { color: #fbbf24; }
+  code {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12.5px;
+    background: #f1f5f9;
+    padding: 2px 6px;
+    border-radius: 4px;
+    color: #1e40af;
+  }
+
+  /* ── Attack deep-dive ── */
+  .attack-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+  .attack-icon { font-size: 36px; line-height: 1; }
+  .attack-title { font-family: 'Syne', sans-serif; font-size: 22px; font-weight: 800; color: var(--ink); }
+  .attack-tag {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    font-weight: 700;
+    padding: 3px 9px;
+    border-radius: 4px;
+    text-transform: uppercase;
+    margin-top: 3px;
+    display: inline-block;
+  }
+  .attack-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin: 14px 0;
+  }
+  .attack-cell {
+    background: #f8fafc;
+    border: 1px solid var(--rule);
+    border-radius: 9px;
+    padding: 13px 16px;
+  }
+  .attack-cell h5 {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    font-weight: 700;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+    color: var(--muted);
+  }
+  .attack-cell p { font-size: 13px; line-height: 1.6; margin: 0; }
+
+  /* ── Cite / footnote ── */
+  .cite {
+    font-size: 11px;
+    color: var(--muted);
+    font-style: italic;
+  }
+
+  /* ── Separator ── */
+  hr { border: none; border-top: 1px solid var(--rule); margin: 36px 0; }
+
+  /* ── Pull quote ── */
+  .pull-quote {
+    border-left: 4px solid var(--blue);
+    padding: 12px 22px;
+    margin: 22px 0;
+    font-size: 16px;
+    font-style: italic;
+    color: #334155;
+    line-height: 1.6;
+  }
+
+  /* ── Epsilon explainer ── */
+  .eps-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin: 14px 0;
+  }
+  .eps-cell {
+    border-radius: 10px;
+    padding: 15px 18px;
+  }
+  .eps-cell h5 {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+  .eps-cell p { font-size: 13px; line-height: 1.6; margin: 0; }
+
+  /* ── Print ── */
+  @media print {
+    body { background: #fff; font-size: 13px; }
+    .cover { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .module-row, .card, .callout { break-inside: avoid; }
+    .section-header { break-before: page; }
+    a { color: inherit; text-decoration: none; }
+  }
+
+  @media (max-width: 640px) {
+    .cover { padding: 44px 24px 52px; }
+    .cover h1 { font-size: 30px; }
+    .page { padding: 0 18px; }
+    .attack-grid, .eps-row { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ─── COVER ─── -->
+<div class="cover">
+  <div class="page">
+    <div class="cover-tag">DPlearn · Presentation Companion</div>
+    <h1>Differential Privacy<br /><span>From First Principles</span></h1>
+    <p class="cover-sub">A complete presenter's guide: module-by-module flow, formula derivations, landmark attack deep-dives, and the emerging AI privacy frontier — everything you need to walk any audience from zero to fluent.</p>
+    <div class="cover-meta">
+      <div class="cover-meta-item">MODULES<span>9 hands-on demos</span></div>
+      <div class="cover-meta-item">AUDIENCE<span>No prior knowledge required</span></div>
+      <div class="cover-meta-item">RUNTIME<span>~45–60 minutes</span></div>
+      <div class="cover-meta-item">LIVE APP<span>mrg-hazmatz.github.io/dplearn</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- ─── TOC ─── -->
+<div class="toc page">
+  <h2>Contents</h2>
+  <ol>
+    <li><a href="#flow">Presentation Flow — All 9 Modules</a></li>
+    <li><a href="#coinflip">The Coin Flip Formula — Full Derivation</a></li>
+    <li><a href="#mia">Membership Inference Attacks &amp; the AI Era</a></li>
+    <li><a href="#attacks">Two Landmark Breach Deep-Dives</a>
+      <div class="sub">Cambridge Analytica · Hospital Patient Re-Identification</div>
+    </li>
+    <li><a href="#eps">The Epsilon &amp; Cost Distinction — Secret Map Explained</a></li>
+  </ol>
+</div>
+
+<div class="page">
+
+<!-- ════════════════════════════════════════════════════════════
+     SECTION 1 — PRESENTATION FLOW
+     ════════════════════════════════════════════════════════════ -->
+<div class="section-header" id="flow">
+  <span class="section-tag" style="background:#eff6ff;color:#2563eb;">Section 1</span>
+  <h2>Presentation Flow</h2>
+  <p>A module-by-module script for a first-time audience. Use the live DPlearn app as your stage — everything runs in a browser with no setup. Estimated total runtime: 45–60 minutes.</p>
+</div>
+
+<div class="callout callout-blue">
+  <span class="label">Presenter tip</span>
+  Open <strong>mrg-hazmatz.github.io/dplearn</strong> on a secondary screen or projector before starting. Each module has a "Next →" button; navigate only when you are ready to move on — the audience can follow on their own devices via the same URL.
+</div>
+
+<!-- M0 -->
+<div class="module-row">
+  <div class="module-num" style="color:#dc2626;">0</div>
+  <div class="module-body">
+    <div class="module-title">The Hook — Why Privacy Math Exists</div>
+    <div class="module-dur">⏱ 3–5 MIN · OPENING IMPACT</div>
+    <div class="module-desc">
+      Open with a disarming question: <em>"How many of you have used Facebook, seen a doctor, or filed taxes this year?"</em> Everyone raises their hand. Then say: <em>"Every single one of those interactions generated records that have been attacked — and in most cases, the attacker used no hacking whatsoever. Just math."</em> Now reveal the breach headlines on screen.
+    </div>
+    <ul class="tip-list">
+      <li>Let the audience read each breach silently before you comment.</li>
+      <li>Emphasise the Uber and LinkedIn examples — they show attacks using only <em>aggregate</em> queries, no individual rows stolen.</li>
+      <li>Close the module with the pivot: <em>"Today we learn why this happens, and the one mathematical guarantee that stops it."</em></li>
+    </ul>
+  </div>
+</div>
+
+<!-- M1 -->
+<div class="module-row">
+  <div class="module-num" style="color:#9333ea;">1</div>
+  <div class="module-body">
+    <div class="module-title">Key Terminology — Building the Vocabulary</div>
+    <div class="module-dur">⏱ 5–7 MIN · VOCABULARY PRIMER</div>
+    <div class="module-desc">
+      Don't lecture through all 15 terms. Instead, hover over <strong>Epsilon (ε)</strong>, <strong>Noise</strong>, <strong>Sensitivity</strong>, and <strong>Composition</strong> — those four underpin every module that follows. Tell the audience to treat the glossary as a reference card they can return to at any time.
+    </div>
+    <ul class="tip-list">
+      <li>Epsilon: <em>"The privacy dial. Small ε = tight privacy. Large ε = loose. You'll see this number on every slide from here on."</em></li>
+      <li>Noise: <em>"Intentional randomness injected into data — the mathematical equivalent of static on a radio signal."</em></li>
+      <li>Composition: <em>"The rule that makes budgets necessary. Costs add up. Ten cheap queries can exceed one expensive one."</em></li>
+      <li>Sensitivity: <em>"How much a single person's data can swing a result. High sensitivity = more noise needed."</em></li>
+    </ul>
+  </div>
+</div>
+
+<!-- M2 -->
+<div class="module-row">
+  <div class="module-num" style="color:#dc2626;">2</div>
+  <div class="module-body">
+    <div class="module-title">Privacy Attacks — Five Live Demos</div>
+    <div class="module-dur">⏱ 10–15 MIN · AUDIENCE PARTICIPATION</div>
+    <div class="module-desc">
+      This is the module with the highest audience energy. Run each attack yourself on screen — don't just explain, <em>demonstrate</em>. The five attacks escalate in sophistication: Differencing → Reconstruction story → Membership Inference → Linkage → Re-identification map.
+    </div>
+    <ul class="tip-list">
+      <li><strong>Differencing:</strong> Run it quickly — 60 seconds. The point lands fast.</li>
+      <li><strong>Reconstruction (Reporter Quinn):</strong> Let someone from the audience pick which query to run next. The shrinking search space is visceral.</li>
+      <li><strong>Membership Inference:</strong> <em>This is your deep-dive moment</em> — see Section 3 of this document for a full AI-context script. Allocate 4–5 minutes here.</li>
+      <li><strong>Linkage &amp; Re-identification:</strong> Click the US map. Pick a populated ZIP code. Show how 3 quasi-identifiers narrow to one person.</li>
+    </ul>
+  </div>
+</div>
+
+<!-- M3 -->
+<div class="module-row">
+  <div class="module-num" style="color:#16a34a;">3</div>
+  <div class="module-body">
+    <div class="module-title">Randomized Response — The Coin Flip Protocol</div>
+    <div class="module-dur">⏱ 8–10 MIN · FORMULA PAYOFF</div>
+    <div class="module-desc">
+      This is the module where the audience first touches <em>real</em> differential privacy. Start by answering the sensitive survey question yourself, live, so the audience sees exactly what the protocol does. Then scale to 300 people and show the dual live graphs — "what people really answered" vs "what the server sees." Finally, run the 500-student Case Study Challenge.
+    </div>
+    <ul class="tip-list">
+      <li>Before running the Case Study, say: <em>"We're going to estimate a hidden truth using nothing but scrambled data and a formula. That formula — two lines of algebra — is at the heart of Local Differential Privacy."</em></li>
+      <li>After the reveal, derive the formula live on a whiteboard or slide — see Section 2 of this document for the step-by-step derivation.</li>
+      <li>Reinforce: <em>"The server never learns your answer. But at scale, the population rate is recoverable within a few percentage points."</em></li>
+    </ul>
+  </div>
+</div>
+
+<!-- M4 -->
+<div class="module-row">
+  <div class="module-num" style="color:#2563eb;">4</div>
+  <div class="module-body">
+    <div class="module-title">The Epsilon Dial — Privacy vs Utility Trade-off</div>
+    <div class="module-dur">⏱ 4–5 MIN · INTERACTIVE KNOB</div>
+    <div class="module-desc">
+      Drag the epsilon slider slowly from left to right. Ask the audience to call out what they notice — the noise band widens as ε drops, and the curve becomes indistinguishable from the true data as ε rises. This is the fundamental trade-off made tangible.
+    </div>
+    <ul class="tip-list">
+      <li>At ε = 0.1: <em>"This is what Apple uses for some iOS signals. The curve is almost unrecognisable — but your individual answer is completely protected."</em></li>
+      <li>At ε = 10: <em>"This is what the US Census used for some age tables in 2020. Accurate, but with detectable individual risk."</em></li>
+      <li>Key takeaway: <em>"There is no free lunch. Every useful answer costs some privacy. DP lets you price that cost explicitly and honestly."</em></li>
+    </ul>
+  </div>
+</div>
+
+<!-- M5 -->
+<div class="module-row">
+  <div class="module-num" style="color:#0d9488;">5</div>
+  <div class="module-body">
+    <div class="module-title">Local vs Central DP — Two Deployment Models</div>
+    <div class="module-dur">⏱ 4–6 MIN · ARCHITECTURE COMPARISON</div>
+    <div class="module-desc">
+      Run the animation and point to the key moment: where noise is added. In Local DP it is added on the device — data leaves already scrambled. In Central DP it is added on the server — raw data crosses the network but the curator is trusted.
+    </div>
+    <ul class="tip-list">
+      <li>Apple example for Local: <em>"Your iPhone adds noise to your emoji usage before sending it. Apple's servers literally cannot see what you typed — even if subpoenaed."</em></li>
+      <li>Uber example for Central: <em>"Uber's CHORUS system intercepts analyst SQL queries and adds noise at the query layer. Raw trip data never leaves Uber's servers to analysts."</em></li>
+      <li>Prompt the audience: <em>"Which model would you trust more as a user? Which one gives more accurate results for the data owner?"</em> — these are in tension, and that's the point.</li>
+    </ul>
+  </div>
+</div>
+
+<!-- M6 -->
+<div class="module-row">
+  <div class="module-num" style="color:#ea580c;">6</div>
+  <div class="module-body">
+    <div class="module-title">The Secret Map — Privacy Budget as a Game, Then as Stakes</div>
+    <div class="module-dur">⏱ 12–16 MIN · FLAGSHIP MODULE</div>
+    <div class="module-desc">
+      This module has two acts. Act 1: play the treasure hunt live with the audience. Act 2 (unlocked after the first hunt ends): run the Medical Registry Attack simulator and walk through the four real-world deep-dive cards.
+    </div>
+    <ul class="tip-list">
+      <li><strong>Act 1 — The Hunt:</strong> Ask the audience to advise on slider position for each peek. After the budget exhausts: <em>"You had to commit before you had enough certainty. That forced commitment is the entire point."</em></li>
+      <li><strong>Act 2 — Medical Registry:</strong> Press "Run attack" and stay silent while the seven queries play out. Let the count collapsing from 10,000 to 1 speak for itself. Then explain: <em>"Every one of these queries was a legitimate aggregate — no rows, no names. And yet, here we are."</em></li>
+      <li>Use the four deep-dive cards as a bridge to Module 7: <em>"These aren't hypothetical. Every company on the next screen built real systems to stop exactly this."</em></li>
+    </ul>
+  </div>
+</div>
+
+<!-- M7 -->
+<div class="module-row">
+  <div class="module-num" style="color:#d97706;">7</div>
+  <div class="module-body">
+    <div class="module-title">Industry Deployments — DP in Production at Scale</div>
+    <div class="module-dur">⏱ 5–8 MIN · REAL-WORLD VALIDATION</div>
+    <div class="module-desc">
+      Pick two or three companies depending on your audience. A technical audience: Uber (CHORUS elastic sensitivity) and LinkedIn (Rényi DP composition). A general audience: Apple (emoji usage, iPhone stays private) and Google (COVID Mobility Reports).
+    </div>
+    <ul class="tip-list">
+      <li>Apple is the most accessible: <em>"Your phone sends Apple a noisy signal. Apple combines millions of noisy signals. Accuracy emerges from volume. Your individual answer is permanently protected."</em></li>
+      <li>US Census card is the most powerful: <em>"In 2020, for the first time in history, every published census table was protected by formal differential privacy. 330 million Americans. A single global privacy budget."</em></li>
+    </ul>
+  </div>
+</div>
+
+<!-- M8 -->
+<div class="module-row">
+  <div class="module-num" style="color:#9333ea;">8</div>
+  <div class="module-body">
+    <div class="module-title">Quiz — Consolidation &amp; Recall</div>
+    <div class="module-dur">⏱ 5–10 MIN · OPTIONAL AUDIENCE GAME</div>
+    <div class="module-desc">
+      Optional but effective for classroom or conference settings. Have the audience answer on their own devices and compare scores. 10 questions from a 32-question pool — re-running gives a fresh set. The review mode shows full explanations for every answer.
+    </div>
+    <ul class="tip-list">
+      <li>Closing line for the presentation: <em>"Differential privacy is not magic. It is a promise — a mathematical contract between the people who hold your data and the people whose data it is. Now you understand exactly what that contract says."</em></li>
+    </ul>
+  </div>
+</div>
+
+
+<!-- ════════════════════════════════════════════════════════════
+     SECTION 2 — COIN FLIP FORMULA DERIVATION
+     ════════════════════════════════════════════════════════════ -->
+<div class="section-header" id="coinflip">
+  <span class="section-tag" style="background:#f0fdf4;color:#16a34a;">Section 2</span>
+  <h2>The Coin Flip Formula — Full Derivation</h2>
+  <p>Where does <code>p_true = 2 × p_reported − 0.5</code> come from? Here is the derivation from scratch — suitable for a whiteboard moment after running the 500-student Case Study Challenge.</p>
+</div>
+
+<h3>The Protocol</h3>
+<p>Each survey respondent privately follows a two-coin protocol before answering a yes/no question:</p>
+<ol>
+  <li>Flip <strong>Coin 1</strong>. If <strong>HEADS</strong> → answer truthfully.</li>
+  <li>If <strong>TAILS</strong> → flip <strong>Coin 2</strong>. Answer <strong>YES</strong> if HEADS, <strong>NO</strong> if TAILS.</li>
+</ol>
+<p>No one but the respondent knows which coin landed how. Even if a government subpoenas every answer, each "YES" could have been truthful or random — plausible deniability is mathematically guaranteed.</p>
+
+<h3>Setting Up the Equation</h3>
+<p>Let <code>p</code> be the true probability that a person answers YES (the population rate we want to recover). What does the server observe?</p>
+
+<div class="math-block">
+<span class="comment">-- The server sees "reported YES" if either of two paths occurs --</span>
+
+P(reported YES)
+  = P(Coin₁ = H) × P(true YES)   <span class="comment">-- respondent told the truth and is truly YES</span>
+  + P(Coin₁ = T) × P(Coin₂ = H)  <span class="comment">-- respondent used the random coin and it landed H</span>
+
+  = ½ × p   +   ½ × ½
+
+  = <span class="formula">½p + ¼</span>
+</div>
+
+<p>Let <code>q = P(reported YES)</code>. This is the number the server can directly measure by counting responses:</p>
+<div class="math-block">
+q = ½p + ¼
+</div>
+
+<h3>Solving Backwards for the True Rate</h3>
+<p>We want to isolate <code>p</code> — the truth that everyone was hiding. Just algebra:</p>
+
+<div class="math-block">
+q         = ½p + ¼
+
+q − ¼     = ½p           <span class="comment">-- subtract ¼ from both sides</span>
+
+2(q − ¼)  = p            <span class="comment">-- multiply both sides by 2</span>
+
+<span class="result">p = 2q − ½</span>           <span class="comment">-- or equivalently: p_true ≈ 2 × p_reported − 0.5</span>
+</div>
+
+<div class="callout callout-green">
+  <span class="label">The formula</span>
+  <strong>p_true ≈ 2 × p_reported − 0.5</strong><br/>
+  This is the core formula used in every Local DP survey system. It works because the coin-flip randomisation is a known, predictable process — so its effect can be mathematically subtracted from the observed result.
+</div>
+
+<h3>Sanity Checks</h3>
+
+<div class="math-block">
+<span class="comment">-- If everyone truly said YES (p=1.0):</span>
+Server observes: q = ½(1.0) + ¼ = 0.75   <span class="comment">(75% report YES)</span>
+Formula: p = 2(0.75) − 0.5 = <span class="result">1.0 ✓</span>
+
+<span class="comment">-- If nobody truly said YES (p=0.0):</span>
+Server observes: q = ½(0.0) + ¼ = 0.25   <span class="comment">(25% report YES — just the random coin)</span>
+Formula: p = 2(0.25) − 0.5 = <span class="result">0.0 ✓</span>
+
+<span class="comment">-- If the true rate is 45% (p=0.45), as in the Case Study:</span>
+Server observes: q = ½(0.45) + ¼ = 0.475
+Formula: p = 2(0.475) − 0.5 = <span class="result">0.45 ✓</span>
+</div>
+
+<h3>Why the Formula Gets Better with More People</h3>
+<p>The formula works in expectation — on average across many respondents. With 10 people, random variation in coin flips creates noisy estimates. With 500, 1,000, or millions of respondents, the law of large numbers brings the estimate within fractions of a percentage point of the true rate. This is why Local DP is viable for Apple (billions of iPhones) but impractical for a 30-person team survey.</p>
+
+<div class="callout callout-amber">
+  <span class="label">Important limitation</span>
+  The formula assumes exactly a ½ probability for each coin. If the protocol were changed to use a biased coin (e.g. ¾ probability of truthful answer), the formula changes accordingly — the general form is: <code>p_true = (p_reported − q_random) / p_honest</code>, where <code>p_honest</code> is the probability of answering truthfully and <code>q_random</code> is the expected YES rate from pure randomisation.
+</div>
+
+
+<!-- ════════════════════════════════════════════════════════════
+     SECTION 3 — MEMBERSHIP INFERENCE & AI
+     ════════════════════════════════════════════════════════════ -->
+<div class="section-header" id="mia">
+  <span class="section-tag" style="background:#faf5ff;color:#9333ea;">Section 3</span>
+  <h2>Membership Inference Attacks &amp; the AI Era</h2>
+  <p>Of all five attack types in DPlearn, membership inference is the one that has escalated most dramatically since 2017 — because it scales directly with the size and capability of AI models. This section gives the background, the technical mechanics, the legal context, and the defences.</p>
+</div>
+
+<h3>What Is a Membership Inference Attack?</h3>
+<p>A <strong>membership inference attack (MIA)</strong> answers a single question: <em>"Was this specific data record used to train this model?"</em></p>
+<p>The attack exploits a well-documented property of machine learning: models <em>overfitting</em> their training data. A model that has seen a record before will be more confident, assign it lower loss, and produce a subtly different output pattern than it does for a record it has never seen. That difference — tiny, but measurable — is the attack surface.</p>
+<p>Unlike a database breach (which requires unauthorised access) or a reconstruction attack (which requires repeated queries), a membership inference attack requires only <em>black-box access to the model's outputs</em> — which is exactly what any user of a public API has.</p>
+
+<h3>The Shadow Model Attack (Shokri et al., 2017)</h3>
+<p>The foundational method was introduced in <em>"Membership Inference Attacks Against Machine Learning Models"</em> (Shokri, Stronati, Song, Shmatikov — IEEE S&amp;P 2017, arXiv:1610.05820). The attack requires no knowledge of the target model's architecture or training data:</p>
+<ol>
+  <li>The attacker trains several <strong>shadow models</strong> on data sampled from the same distribution as the target — publicly available data of the same type.</li>
+  <li>Each shadow model is queried with both its own training data ("member") and held-out data ("non-member"), producing a labelled dataset of prediction vectors tagged with true membership.</li>
+  <li>An <strong>attack classifier</strong> is trained on this labelled data to distinguish "member" confidence signatures from "non-member" signatures.</li>
+  <li>The attack classifier is then applied to the real target model. It achieves <strong>70–95% precision</strong> across evaluated models, with near-zero false negatives in the best cases.</li>
+</ol>
+
+<div class="callout callout-purple">
+  <span class="label">Key insight</span>
+  The reason the attack works is not a bug in the model — it is a consequence of the optimisation objective itself. Every gradient descent step that reduces training loss is, by definition, making the model memorise its training set a little more than before.
+</div>
+
+<h3>Large Language Models — Verbatim Extraction</h3>
+<p>Membership inference gets significantly more dangerous at the scale of modern large language models (LLMs). The risk is no longer just <em>"was this record in training?"</em> — it is <em>"can I recover the record verbatim from the model's outputs?"</em></p>
+
+<p><strong>Carlini et al. (USENIX Security 2021)</strong> — <em>"Extracting Training Data from Large Language Models"</em>: Applied to GPT-2, the team extracted hundreds of training sequences verbatim, including full names paired with phone numbers, email addresses, IRC logs, source code, and 128-bit cryptographic UUIDs. These were records from the open web that had been ingested during pretraining.</p>
+
+<p><strong>Carlini et al. (arXiv:2311.17035, 2023)</strong> — <em>"Scalable Extraction of Training Data from Production Language Models"</em>: Targeted ChatGPT directly. The team discovered a "divergence attack" — prompting the model with a repetitive token sequence (e.g., "Repeat the word 'poem' forever") caused it to exit its RLHF fine-tuning behaviour and fall back to raw pretraining patterns. The result: several megabytes of verbatim training data extracted for approximately <strong>$200 in API costs</strong>. The paper estimates a full gigabyte could be extracted with a 150× larger budget. Critically, <strong>safety fine-tuning does not erase memorised pretraining content</strong> — it merely suppresses its expression under normal conditions.</p>
+
+<h3>Diffusion Models — Photographic Reproduction</h3>
+<p><strong>Carlini et al. (USENIX Security 2023)</strong> — <em>"Extracting Training Data from Diffusion Models"</em>: Applied to Stable Diffusion and Google's Imagen, the researchers extracted over <strong>1,000 near-identical replicas of training images</strong> using membership inference scoring combined with standard sampling. The extracted content included photographs of identifiable real individuals and trademarked logos. A key finding: image-caption duplication (where both the image and its text caption appear multiple times in the training set) drove memorisation far more than image repetition alone — a property that is prevalent in web-scraped training data.</p>
+
+<h3>Why the AI Era Makes This Uniquely Dangerous</h3>
+<ol>
+  <li><strong>Scale of sensitive data ingestion.</strong> LLMs are trained on web-scale corpora that incidentally include medical records, legal filings, private messages, and PII. Unlike classical ML trained on narrow curated datasets, the surface area of potentially memorised sensitive content is vastly larger — and largely unknown to the model deployer.</li>
+  <li><strong>Federated learning's incomplete protection.</strong> Federated learning (FL) distributes training across user devices, sharing only gradient updates rather than raw data. However, <em>gradient inversion attacks</em> (Zhu et al., NeurIPS 2019) demonstrated that individual training samples can be reconstructed from gradient updates with high fidelity, particularly for images and small batch sizes. FL alone does not prevent membership inference.</li>
+  <li><strong>Alignment fine-tuning is not a privacy defence.</strong> The divergence attack on ChatGPT proves that RLHF alignment suppresses — but does not erase — pretraining memorisation. From a privacy standpoint, the model still "knows" the training record; it just takes a different prompt structure to surface it.</li>
+</ol>
+
+<h3>The Legal and Regulatory Landscape</h3>
+<p><strong>GDPR Article 17 — "Right to erasure."</strong> Individuals may request that their data be deleted. For classical databases, this is straightforward. For ML models, it is computationally intractable: model weights encode statistical traces of training data diffusely across millions or billions of parameters. Deleting from the training set and retraining from scratch is the only guaranteed method of compliance — and is prohibitively expensive for large models. This gap has spawned the field of <strong>machine unlearning</strong> — techniques that approximate forgetting via gradient ascent or influence function estimation — but no method achieves exact unlearning guarantees without full retraining.</p>
+
+<p><strong>The New York Times v. OpenAI (filed December 2023, ongoing).</strong> The Times demonstrated that ChatGPT could reproduce verbatim or near-verbatim passages from Times articles when prompted appropriately, enabling paywall circumvention. This is framed as a copyright violation distinct from the unlicensed training use itself — the argument being that a product that can reproduce the training data to an end-user's benefit is a substitute for the original work. In March 2025, Judge Sidney Stein of the Southern District of New York denied OpenAI's motion to dismiss, allowing the core claims to proceed. The outcome of this case will likely set precedent for AI training data and memorisation liability globally.</p>
+
+<p><strong>EU AI Act (in force August 2024, high-risk provisions enforceable August 2026).</strong> Article 10 mandates that training datasets for high-risk AI systems meet representativeness and quality standards. General-purpose AI providers must publicly disclose training data composition and flag copyrighted materials. The Act operates alongside GDPR without superseding it — Italy's data protection authority (Garante) fined OpenAI €15 million in December 2024 for GDPR violations related to ChatGPT's training data.</p>
+
+<h3>The Defence: Differential Privacy for Machine Learning</h3>
+<p><strong>DP-SGD — Differentially Private Stochastic Gradient Descent</strong> (Abadi et al., Google, 2016) is the primary defence. It adds privacy guarantees to the training loop itself via two mechanisms per mini-batch:</p>
+<ol>
+  <li><strong>Per-sample gradient clipping.</strong> For each individual training example, the gradient is computed separately. If its L2 norm exceeds a clipping threshold C, it is scaled down to C. This bounds the maximum influence any single record can have on the model update — which is exactly the definition of sensitivity in differential privacy.</li>
+  <li><strong>Gaussian noise addition.</strong> After clipping and summing, Gaussian noise proportional to C × noise_multiplier is added before the optimiser step. More noise = smaller ε (stronger privacy) at the cost of model accuracy.</li>
+</ol>
+
+<div class="callout callout-blue">
+  <span class="label">Production epsilon values</span>
+  <strong>Apple</strong> uses ε = 1 (with δ = 1.5×10⁻⁷) for scene-learning models on-device via secure aggregation — one of the tightest publicly disclosed production epsilon values. ε = 4 is used for some Safari signals. <strong>Google's TensorFlow Privacy</strong> is the primary open-source DP-SGD framework. The <strong>US Census 2020</strong> used a global ε ≈ 19.61 across all published tables for 330 million respondents. A known limitation: DP-SGD degrades accuracy disproportionately for underrepresented demographic subgroups, because the noise required overwhelms sparse signal from minority populations — a fairness/privacy tension actively being researched.
+</div>
+
+<div class="pull-quote">"A model trained with DP-SGD cannot memorise any individual record, by mathematical proof — not because the engineers were careful, but because the training algorithm makes it impossible for any single record to leave a distinguishable fingerprint in the weights."</div>
+
+
+<!-- ════════════════════════════════════════════════════════════
+     SECTION 4 — TWO LANDMARK ATTACK DEEP-DIVES
+     ════════════════════════════════════════════════════════════ -->
+<div class="section-header" id="attacks">
+  <span class="section-tag" style="background:#fef2f2;color:#dc2626;">Section 4</span>
+  <h2>Two Landmark Breach Deep-Dives</h2>
+  <p>Both attacks appear in DPlearn's Module 0. They are chosen because they illustrate two fundamentally different attack surfaces — one social-graph linkage at scale, one simple join on public records — and both are still directly relevant today.</p>
+</div>
+
+<!-- Cambridge Analytica -->
+<div class="card" style="margin-bottom:28px;">
+  <div class="attack-header">
+    <div class="attack-icon">🗳</div>
+    <div>
+      <div class="attack-title">Cambridge Analytica</div>
+      <span class="attack-tag" style="background:#fef2f2;color:#dc2626;">Social graph · 87 million profiles · 2018</span>
+    </div>
+  </div>
+
+  <div class="attack-grid">
+    <div class="attack-cell">
+      <h5>The Dataset</h5>
+      <p>Facebook user profiles: likes, page interactions, friend lists, demographic data, and private messages — for approximately <strong>270,000 consenting users</strong> who downloaded a personality quiz app ("thisisyourdigitallife," built by Dr Aleksandr Kogan at Cambridge). Facebook's API at the time permitted third-party apps to harvest <em>not only</em> the user's own data, but also the data of all their Facebook friends — without those friends' knowledge or consent.</p>
+    </div>
+    <div class="attack-cell">
+      <h5>The Attack</h5>
+      <p>Kogan's app used the social graph traversal to extend from 270,000 consenting users to approximately <strong>87 million profiles</strong>. Cambridge Analytica then applied the <strong>OCEAN psychographic model</strong> (Openness, Conscientiousness, Extraversion, Agreeableness, Neuroticism) to each profile, producing a personality score. These scores were used to <strong>micro-target political advertising</strong> — different persuasive messages for high-N, low-A profiles vs high-O, high-C profiles — in the Brexit referendum (2016) and the US Presidential election (2016).</p>
+    </div>
+    <div class="attack-cell">
+      <h5>Risks &amp; Consequences</h5>
+      <p>Targeted political disinformation at scale; exploitation of psychological vulnerabilities without consent; potential contribution to electoral outcomes. Regulatory consequences: Facebook fined $5 billion by the FTC (2019); Cambridge Analytica dissolved in 2018 amid criminal investigations in the UK and US; GDPR partially enacted in response to this and similar incidents. The UK's ICO fined Facebook £500,000 (the maximum under pre-GDPR law).</p>
+    </div>
+    <div class="attack-cell">
+      <h5>Differential Privacy Mitigation</h5>
+      <p>DP on the social graph API would have required that each query across friend lists inject noise proportional to the query's sensitivity. Bulk export of profile attributes would be impossible — the noise would degrade the psychographic signal below the precision threshold needed for reliable OCEAN scoring. A per-user privacy budget would also have prevented mass traversal: after a small number of friend-profile queries, the budget for that user would be exhausted, capping the graph expansion at a fraction of the 87 million ultimately reached.</p>
+    </div>
+  </div>
+
+  <div class="callout callout-red" style="margin-top:12px;margin-bottom:0;">
+    <span class="label">The DP lesson</span>
+    The attack succeeded because <em>aggregate social graph API responses had infinite, free access</em>. A privacy budget capping the number of profile-attribute queries per third-party app per user would have made 87 million profiles mathematically unreachable before meaningful signal could be extracted.
+  </div>
+</div>
+
+<!-- Hospital Re-identification -->
+<div class="card" style="margin-bottom:28px;">
+  <div class="attack-header">
+    <div class="attack-icon">🏥</div>
+    <div>
+      <div class="attack-title">Hospital Patient Re-Identification</div>
+      <span class="attack-tag" style="background:#fef2f2;color:#dc2626;">Linkage attack · Massachusetts GIC · 1996</span>
+    </div>
+  </div>
+
+  <div class="attack-grid">
+    <div class="attack-cell">
+      <h5>The Dataset</h5>
+      <p>The Massachusetts <strong>Group Insurance Commission (GIC)</strong> published "anonymised" hospital discharge records for all state employees (approximately 135,000 records) for research purposes. The dataset had name, Social Security number, and explicit identifiers removed. Retained fields included: <strong>ZIP code, date of birth, sex, diagnosis codes, procedure codes, and total charges</strong> — fields considered non-identifying in isolation.</p>
+    </div>
+    <div class="attack-cell">
+      <h5>The Attack</h5>
+      <p><strong>Latanya Sweeney</strong> (then a PhD student at MIT) purchased the Cambridge, Massachusetts voter registration roll for $20 — a publicly available government record containing name, address, ZIP code, date of birth, and sex for all registered voters. She performed a simple <strong>inner join</strong> on the three shared quasi-identifiers: {ZIP code, date of birth, sex}. In Cambridge specifically, 87% of residents were <em>uniquely identified</em> by just these three fields. She successfully identified the medical records — including diagnoses and prescriptions — of the <strong>Massachusetts Governor William Weld</strong>, and mailed them to his office to demonstrate the vulnerability.</p>
+    </div>
+    <div class="attack-cell">
+      <h5>Risks &amp; Consequences</h5>
+      <p>Medical records are among the most sensitive personal data: insurance discrimination, employer discrimination, social stigma, intimate partner surveillance. This attack predates HIPAA's full enforcement. Sweeney's paper ("k-anonymity: A model for protecting privacy," 2002) directly informed HIPAA Safe Harbor's 18-identifier list. Despite this, later studies showed that even HIPAA Safe Harbor-compliant data could be re-identified using richer auxiliary datasets — demonstrating that field suppression alone is insufficient.</p>
+    </div>
+    <div class="attack-cell">
+      <h5>Differential Privacy Mitigation</h5>
+      <p>DP applied to the GIC data before publication would have injected Laplace noise into continuous fields such as age and charges, and would have suppressed or generalised rare {ZIP, age, sex} combinations below a minimum count threshold. An individual with a unique combination — a 52-year-old woman with a specific condition in a small ZIP code — would either not appear in the output or would appear with generalised age (e.g. "50–54") and a randomised charge value, breaking the exact join condition that made re-identification possible.</p>
+    </div>
+  </div>
+
+  <div class="callout callout-red" style="margin-top:12px;margin-bottom:0;">
+    <span class="label">The DP lesson</span>
+    Sweeney's attack required no hacking — only a $20 public database and a laptop. The GIC data was "anonymised" by removing obvious identifiers, but retained enough quasi-identifiers to reconstruct identity via linkage. DP prevents this by guaranteeing that the presence or absence of <em>any individual</em> shifts the output distribution by at most e<sup>ε</sup> — making exact-match linkage probabilistically impossible, not just procedurally discouraged.
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════════
+     SECTION 5 — EPSILON vs COST IN THE SECRET MAP
+     ════════════════════════════════════════════════════════════ -->
+<div class="section-header" id="eps">
+  <span class="section-tag" style="background:#fffbeb;color:#d97706;">Section 5</span>
+  <h2>The Epsilon &amp; Cost Distinction — Secret Map Explained</h2>
+  <p>In Module 6, two epsilon-like numbers appear simultaneously in the Peek Precision panel. This is one of the most common points of confusion for first-time players — but the distinction it illustrates is fundamental to how real DP systems work.</p>
+</div>
+
+<div class="callout callout-amber">
+  <span class="label">The confusion</span>
+  When the slider is at its minimum, the Peek Precision panel shows <strong>ε per peek: 0.10</strong> and below it <strong>Next peek: ε0.24</strong>. These are not the same number — and they are not supposed to be.
+</div>
+
+<div class="eps-row">
+  <div class="eps-cell" style="background:#eff6ff;border:1px solid #bfdbfe;">
+    <h5 style="color:#1d4ed8;">ε per peek — 0.10</h5>
+    <p>This is the <strong>precision setting</strong> you chose with the slider. It controls how much Laplace noise is applied to the peek — how sharp or blurry the revealed tile appears. <strong>Low ε (0.10)</strong> = lots of noise = very blurry tile. <strong>High ε (1.50)</strong> = little noise = crystal clear. This is the "signal quality knob."</p>
+  </div>
+  <div class="eps-cell" style="background:#fffbeb;border:1px solid #fde68a;">
+    <h5 style="color:#92400e;">Next peek: ε0.24 — the budget cost</h5>
+    <p>This is the <strong>budget deduction</strong> that will be subtracted from your 2.0 ε wallet when you tap the tile. It is not identical to the precision value — it is calculated from a formula that includes a floor cost, because in a real DP system <em>every query has a minimum cost</em>.</p>
+  </div>
+</div>
+
+<h3>The Cost Formula</h3>
+<div class="math-block">
+<span class="comment">-- BASE_COST = 0.30 (the minimum cost for any peek, even the blurriest)</span>
+
+cost = BASE_COST × (0.7 + ε × 0.9)
+
+<span class="comment">-- At minimum precision (ε = 0.10):</span>
+cost = 0.30 × (0.7 + 0.10 × 0.9)
+     = 0.30 × (0.7 + 0.09)
+     = 0.30 × 0.79
+     = <span class="result">ε0.24</span>
+
+<span class="comment">-- At maximum precision (ε = 1.50):</span>
+cost = 0.30 × (0.7 + 1.50 × 0.9)
+     = 0.30 × (0.7 + 1.35)
+     = 0.30 × 2.05
+     = <span class="result">ε0.62</span>
+</div>
+
+<h3>Why the Floor Cost Matters</h3>
+<p>In a real differential privacy system, querying a database is never free — even a query that returns heavily noised output still consumes epsilon from the privacy budget. This is because the act of answering <em>any</em> query reveals something about the dataset, even if the answer is buried under noise. A system that allowed zero-cost queries would let an attacker run unlimited queries, average away the noise across thousands of results, and reconstruct exact values — defeating differential privacy entirely.</p>
+
+<p>The BASE_COST of ε0.30 in the Secret Map encodes this principle. Even your blurriest, cheapest peek (ε=0.10, cost=ε0.24) still depletes your wallet, because that blurry glimpse still incrementally narrows your uncertainty about where the treasure is. Eight minimum-cost peeks (8 × 0.24 = 1.92 ε) exhaust nearly all of your 2.0 ε budget — just as in a real DP system, a patient attacker running many cheap queries will eventually deplete the budget just as surely as running fewer expensive ones.</p>
+
+<h3>One-Line Summary</h3>
+<ul>
+  <li><strong>ε per peek</strong> = how sharp your view is (the noise level, the signal quality)</li>
+  <li><strong>Next peek cost</strong> = how much budget that sharpness burns (always ≥ BASE_COST)</li>
+</ul>
+<p>They move in the same direction — higher precision always costs more — but they live on different scales. This mirrors how real DP deployments report two numbers: the mechanism's epsilon parameter (precision) and the accumulated privacy loss (budget consumed). They are related but not identical.</p>
+
+<hr />
+
+<p class="cite" style="text-align:center;margin-top:32px;">
+  DPlearn is available at <strong>mrg-hazmatz.github.io/dplearn</strong> · Source: github.com/MRG-Hazmatz/dplearn<br/>
+  Research references: Shokri et al. (2017) arXiv:1610.05820 · Carlini et al. (2021) USENIX Security · Carlini et al. (2023) arXiv:2311.17035 ·
+  Sweeney (2002) IJUFKS 10(5) · Abadi et al. (2016) CCS · Apple Differential Privacy Overview (2017)
+</p>
+
+</div><!-- /page -->
+</body>
+</html>
