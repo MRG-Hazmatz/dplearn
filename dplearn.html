@@ -130,6 +130,20 @@ button:focus-visible, input:focus-visible, select:focus-visible, [role="button"]
   0%, 100% { box-shadow: 0 0 0 0 currentColor; }
   50% { box-shadow: 0 0 0 6px transparent; }
 }
+@keyframes treasureGlow {
+  0%, 100% { box-shadow: 0 0 10px #f59e0b88, 0 0 22px #f59e0b33, inset 0 0 12px #f59e0b22; }
+  50% { box-shadow: 0 0 22px #f59e0bcc, 0 0 44px #f59e0b55, inset 0 0 18px #f59e0b44; }
+}
+@keyframes tilePop {
+  0% { transform: scale(0.82); opacity: 0; }
+  60% { transform: scale(1.08); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
+}
+@keyframes wrongShake {
+  0%, 100% { transform: translateX(0); }
+  20%, 60% { transform: translateX(-5px); }
+  40%, 80% { transform: translateX(5px); }
+}
 
 /* ─── Utility Classes ──────────────────────────────────────────── */
 .fade-up { animation: fadeUp 0.45s cubic-bezier(.2,.9,.3,1.2) both; }
@@ -2391,9 +2405,9 @@ function AnalystResult({ guess, dpEstimate, actualRate, rawReported }) {
   const youBeatFormula = guessError < dpError;
 
   const rows = [
+    { lbl: '📊 What people really said',       val: actualRate,  col: C.blue,  note: 'the truth' },
     { lbl: '🎯 Your guess',                   val: guess,       col: C.amber, note: `${guessError}pt off` },
     { lbl: '🧮 Formula answer',               val: dpEstimate,  col: C.green, note: `${dpError}pt off` },
-    { lbl: '📊 What people really said',       val: actualRate,  col: C.blue,  note: 'the truth' },
     { lbl: '🔀 What the server received',      val: rawReported, col: C.mute,  note: 'scrambled by coin flips' },
   ];
 
@@ -2931,191 +2945,411 @@ function M5_LocalCentral({ onNext }) {
 }
 
 /* ═══════════════════════════════════════════════════════════════════
-   MODULE 6 — PRIVACY BUDGET
+   MODULE 6 — PRIVACY BUDGET (The Secret Map)
    ═══════════════════════════════════════════════════════════════════ */
-const QUERY_LIST = [
-  { id: 0, label: 'Count all trips today',      cost: 0.12, sens: 'Very low',  icon: '📊', desc: 'Millions of records — very broad',          makeResult: () => Math.round(154000 + laplace(500)) },
-  { id: 1, label: 'Trips by city',              cost: 0.28, sens: 'Low',       icon: '🗺', desc: 'Geographic breakdown across cities',         makeResult: () => Math.round(22000 + laplace(300)) },
-  { id: 2, label: 'Trips by driver age range',  cost: 0.55, sens: 'Medium',    icon: '👤', desc: 'Demographic slice — narrower',               makeResult: () => Math.round(3400 + laplace(100)) },
-  { id: 3, label: 'Trips by driver+city+hour',  cost: 1.10, sens: 'High',      icon: '🔍', desc: 'Multi-dimensional — near individual',        makeResult: () => Math.round(42 + laplace(12)) },
-  { id: 4, label: "Specific driver's weekly count", cost: 1.65, sens: 'Very high', icon: '⚠', desc: 'Near-individual level query',           makeResult: () => Math.round(7 + laplace(4)) },
-];
-const BUDGET_MAX = 3.0;
+const BUDGET_MAX = 2.0;
+const BASE_COST = 0.30;
+const GRID_COLS = 5;
+const GRID_ROWS = 4;
+const TILE_COUNT = GRID_COLS * GRID_ROWS;
+const DECOY_EMOJIS = ['🌵','🪨','🌿','🍄','🦴','🗿','🪵','🍃','🌾','🐚','🐾','🦎','🕸','🪶','🌸','🍂','🪺','🍁','🌼','🧭'];
+
+const toEps       = v => +(0.10 + ((v - 1) * (1.50 - 0.10)) / 9).toFixed(2);
+const tileCost    = eps => +(BASE_COST * (0.7 + eps * 0.9)).toFixed(2);
+const tileBlurPx  = eps => Math.max(0, Math.round(14 - eps * 11));
+const CHEAPEST    = tileCost(toEps(1));
+
+function shuffleArr(a) {
+  const arr = a.slice();
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
 
 function M6_Budget({ onNext }) {
-  const [budget, setBudget] = useState(BUDGET_MAX);
-  const [log, setLog] = useState([]);
-  const [locked, setLocked] = useState(false);
-  const [running, setRunning] = useState(null);
+  const [budget, setBudget]         = useState(BUDGET_MAX);
+  const [sliderVal, setSliderVal]   = useState(5);
+  const [treasureIdx, setTreasure]  = useState(() => Math.floor(Math.random() * TILE_COUNT));
+  const [decoys, setDecoys]         = useState(() => shuffleArr(DECOY_EMOJIS));
+  const [peeks, setPeeks]           = useState([]); // {idx, eps, cost, blur}
+  const [phase, setPhase]           = useState('peeking'); // 'peeking' | 'guessing' | 'revealed'
+  const [guessIdx, setGuess]        = useState(null);
 
-  const runQuery = q => {
-    if (locked || running !== null) return;
-    if (+(budget - q.cost).toFixed(2) < 0) return;
-    setRunning(q.id);
-    setTimeout(() => {
-      const result = q.makeResult();
-      setLog(prev => [{ label: q.label, cost: q.cost, result, icon: q.icon }, ...prev]);
-      const newBudget = Math.max(0, +(budget - q.cost).toFixed(2));
-      setBudget(newBudget);
-      if (newBudget <= 0) setLocked(true);
-      setRunning(null);
-    }, 650);
+  const eps        = toEps(sliderVal);
+  const cost       = tileCost(eps);
+  const blur       = tileBlurPx(eps);
+  const canAfford  = +(budget - cost).toFixed(2) >= 0;
+  const outOfBudget = budget < CHEAPEST;
+
+  const budgetPct = Math.round((budget / BUDGET_MAX) * 100);
+  const budgetColor = budgetPct > 55 ? C.green : budgetPct > 20 ? C.amber : budget > 0 ? C.red : '#475569';
+
+  // Auto-advance to guessing phase when no cheap peek is affordable
+  useEffect(() => {
+    if (phase === 'peeking' && outOfBudget) setPhase('guessing');
+  }, [budget, phase, outOfBudget]);
+
+  const peekFor = idx => peeks.find(p => p.idx === idx);
+  const tileEmoji = i => (i === treasureIdx ? '💎' : decoys[i % decoys.length]);
+
+  const handleTile = i => {
+    if (phase === 'peeking') {
+      if (!canAfford || peekFor(i)) return;
+      setBudget(b => Math.max(0, +(b - cost).toFixed(2)));
+      setPeeks(prev => [...prev, { idx: i, eps, cost, blur }]);
+    } else if (phase === 'guessing') {
+      setGuess(i);
+      setPhase('revealed');
+    }
   };
+
+  const readyToGuess = () => setPhase('guessing');
 
   const reset = () => {
     setBudget(BUDGET_MAX);
-    setLog([]);
-    setLocked(false);
-    setRunning(null);
+    setPeeks([]);
+    setPhase('peeking');
+    setGuess(null);
+    setTreasure(Math.floor(Math.random() * TILE_COUNT));
+    setDecoys(shuffleArr(DECOY_EMOJIS));
+    setSliderVal(5);
   };
 
-  const budgetColor = budget > 1.5 ? C.green : budget > 0.6 ? C.amber : budget > 0 ? C.red : '#475569';
-  const lowBudget = budget < 0.6 && !locked;
-  const pctUsed = Math.round(((BUDGET_MAX - budget) / BUDGET_MAX) * 100);
+  const isWon = phase === 'revealed' && guessIdx === treasureIdx;
+
+  // Contextual narrator tip
+  let tip = null;
+  if (phase === 'peeking' && peeks.length === 0) {
+    tip = { color: C.blue, icon: '🧭', text: 'Drag the precision slider, then tap a tile. Higher ε = clearer view, but drains your budget faster.' };
+  } else if (phase === 'peeking' && !outOfBudget) {
+    tip = { color: C.teal, icon: '🔎', text: `You have ${peeks.length} peek${peeks.length === 1 ? '' : 's'} on the board. Hunt wisely — cheap blurry peeks help you scan, expensive clear peeks help you confirm.` };
+  } else if (phase === 'guessing' && outOfBudget) {
+    tip = { color: C.red, icon: '⛔', text: 'Budget exhausted — the system is locked. Commit to your best guess using the clues you have.' };
+  } else if (phase === 'guessing') {
+    tip = { color: C.amber, icon: '🎯', text: 'Guess mode active. Click the tile where you think the 💎 is hiding.' };
+  } else if (phase === 'revealed' && isWon) {
+    tip = { color: C.green, icon: '🎉', text: `Treasure located in ${peeks.length} peek${peeks.length === 1 ? '' : 's'}! Careful ε spending paid off.` };
+  } else if (phase === 'revealed') {
+    tip = { color: C.red, icon: '💥', text: 'Wrong tile — the privacy budget expired before you could narrow it down. That is exactly why budgets exist.' };
+  }
 
   return (
-    <div style={{ padding: '1.5rem 1.25rem', maxWidth: 880, margin: '0 auto' }}>
+    <div style={{ padding: '1.5rem 1.25rem', maxWidth: 960, margin: '0 auto' }}>
       <ModuleHeader
         tagLabel="MODULE 6"
-        tagColor={C.red}
-        title="Privacy Budget"
-        subtitle="Every query costs epsilon from your daily budget. When it runs out, no more queries — preventing attackers from running thousands of queries to statistically cancel out the noise."
+        tagColor={C.orange}
+        title="Privacy Budget — The Secret Map"
+        subtitle="Every query against a private dataset costs epsilon. Spend it all, and no more queries are allowed. Hunt a hidden treasure with limited peeks — this is what stops attackers from running thousands of queries to wash out the noise."
       />
 
-      <Card style={{ marginBottom: 16, padding: '16px 18px' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-          <span style={{ fontSize: 13.5, fontWeight: 600, color: locked ? C.red : budgetColor, transition: 'color 0.3s' }}>
-            {locked ? '⛔ Budget exhausted — system locked' : 'Privacy budget remaining'}
+      {/* Budget meter */}
+      <Card style={{ marginBottom: 14, padding: '16px 18px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+          <span style={{ fontSize: 13.5, fontWeight: 600, color: outOfBudget ? C.red : budgetColor, transition: 'color 0.3s' }}>
+            {outOfBudget ? '⛔ Budget exhausted — system locked' : 'Privacy budget remaining'}
           </span>
-          <span className="mono" style={{ fontSize: 20, fontWeight: 700, color: locked ? C.red : budgetColor, transition: 'color 0.3s' }}>
-            {locked ? '0.00' : budget.toFixed(2)} ε
+          <span className="mono" style={{ fontSize: 20, fontWeight: 700, color: outOfBudget ? C.red : budgetColor, transition: 'color 0.3s' }}>
+            {budget.toFixed(2)} ε
           </span>
         </div>
         <div style={{ background: '#0a1020', borderRadius: 8, height: 20, overflow: 'hidden', marginBottom: 6, position: 'relative' }}>
           <div style={{
             height: '100%',
-            width: Math.round((budget / BUDGET_MAX) * 100) + '%',
-            background: locked ? '#475569' : `linear-gradient(90deg, ${budgetColor}cc, ${budgetColor})`,
+            width: budgetPct + '%',
+            background: outOfBudget ? '#475569' : `linear-gradient(90deg, ${budgetColor}cc, ${budgetColor})`,
             transition: 'width 0.5s cubic-bezier(.2,.9,.3,1.2), background 0.4s',
             borderRadius: 8,
-            animation: lowBudget ? 'pulse 1s ease-in-out infinite' : 'none',
-            boxShadow: locked ? 'none' : `0 0 12px ${budgetColor}66`,
+            animation: (!outOfBudget && budgetPct < 25) ? 'pulse 1s ease-in-out infinite' : 'none',
+            boxShadow: outOfBudget ? 'none' : `0 0 12px ${budgetColor}66`,
           }} />
         </div>
         <div className="mono" style={{ display: 'flex', justifyContent: 'space-between', fontSize: 10, color: C.mute }}>
           <span>0</span>
-          <span>{pctUsed}% used</span>
-          <span>daily max: {BUDGET_MAX} ε</span>
+          <span>{peeks.length} peek{peeks.length === 1 ? '' : 's'} · {Math.round(((BUDGET_MAX - budget) / BUDGET_MAX) * 100)}% used</span>
+          <span>max: {BUDGET_MAX.toFixed(1)} ε</span>
         </div>
       </Card>
 
-      {locked && (
-        <div className="fade-up" style={{ padding: '14px 18px', borderRadius: 12, background: C.red + '08', border: `1px solid ${C.red}44`, marginBottom: 16 }}>
-          <div style={{ fontSize: 15, fontWeight: 600, color: C.red, marginBottom: 6 }}>Access denied</div>
-          <p style={{ fontSize: 13.5, color: C.mute, lineHeight: 1.65 }}>
-            Without a budget cap, an attacker could run 10,000 variations and statistically average out the noise to recover exact values. The budget expires before enough queries can accumulate to cancel DP protection.
-          </p>
+      {/* Narrator tip */}
+      {tip && (
+        <div key={tip.text} className="fade-up" style={{
+          padding: '11px 15px', borderRadius: 12,
+          background: tip.color + '10',
+          border: `1px solid ${tip.color}44`,
+          marginBottom: 14,
+          fontSize: 13.5, color: '#e2e8f0', lineHeight: 1.55,
+          display: 'flex', alignItems: 'center', gap: 10,
+        }}>
+          <span style={{ fontSize: 20 }}>{tip.icon}</span>
+          <span>{tip.text}</span>
         </div>
       )}
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1.15fr) minmax(0, 1fr)', gap: 18, marginBottom: 14 }}>
-        <div>
-          {log.length === 0 ? (
-            <Card style={{
-              textAlign: 'center',
-              padding: '36px 20px',
-              color: C.mute,
-              fontSize: 13,
-              border: '1px dashed ' + C.border,
-              background: '#0a1020',
-            }}>
-              <div style={{ fontSize: 32, marginBottom: 10 }}>📋</div>
-              Query log empty — click a query on the right to start
-            </Card>
-          ) : (
-            <Card style={{ padding: '14px 16px', maxHeight: 320, overflowY: 'auto' }}>
-              <div className="mono" style={{ fontSize: 9, color: C.mute, marginBottom: 10, letterSpacing: '0.08em', fontWeight: 600 }}>
-                QUERY LOG
-              </div>
-              {log.map((entry, i) => (
-                <div key={i} className="slide-right" style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  padding: '9px 0',
-                  borderTop: i > 0 ? '1px solid #1e293b' : 'none',
-                  gap: 10,
-                }}>
-                  <span style={{ fontSize: 12.5, color: '#e2e8f0', flex: 1, display: 'flex', alignItems: 'center', gap: 6 }}>
-                    <span>{entry.icon}</span>{entry.label}
-                  </span>
-                  <span className="mono" style={{ fontSize: 12, color: C.blue, flexShrink: 0, fontWeight: 600 }}>
-                    {entry.result.toLocaleString()}
-                  </span>
-                  <span className="mono" style={{ fontSize: 10, color: C.red, flexShrink: 0, fontWeight: 600 }}>
-                    −ε{entry.cost}
-                  </span>
-                </div>
-              ))}
-            </Card>
-          )}
-        </div>
+      <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1.15fr) minmax(0, 1fr)', gap: 16, marginBottom: 14 }}>
+        {/* Map grid */}
+        <Card style={{
+          padding: '18px',
+          background: 'radial-gradient(ellipse at center, #14203a 0%, #0a1020 75%)',
+          border: `1px solid ${C.amber}22`,
+        }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+            <span className="mono" style={{ fontSize: 9, color: C.amber, letterSpacing: '0.1em', fontWeight: 700 }}>
+              THE SECRET MAP · 20 TILES · 1 TREASURE
+            </span>
+            <span className="mono" style={{ fontSize: 9, color: C.mute, letterSpacing: '0.08em' }}>
+              {phase === 'guessing' ? 'GUESS MODE' : phase === 'revealed' ? 'REVEALED' : 'HUNT'}
+            </span>
+          </div>
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: `repeat(${GRID_COLS}, 1fr)`,
+            gap: 8,
+          }}>
+            {Array.from({ length: TILE_COUNT }).map((_, i) => {
+              const peek = peekFor(i);
+              const revealed = phase === 'revealed';
+              const isTreasure = i === treasureIdx;
+              const isGuess = guessIdx === i;
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-          {QUERY_LIST.map(q => {
-            const canRun = !locked && running === null && +(budget - q.cost).toFixed(2) >= 0;
-            const tooExpensive = !locked && running === null && +(budget - q.cost).toFixed(2) < 0;
-            const isRunning = running === q.id;
-            const costColor = q.cost > 1 ? C.red : q.cost > 0.5 ? C.amber : C.green;
-            return (
-              <button
-                key={q.id}
-                onClick={() => runQuery(q)}
-                disabled={!canRun}
-                style={{
-                  padding: '11px 13px',
-                  borderRadius: 11,
-                  cursor: canRun ? 'pointer' : 'not-allowed',
-                  border: `1px solid ${isRunning ? C.blue : canRun ? C.orange + '66' : tooExpensive ? C.red + '44' : '#1e293b'}`,
-                  background: isRunning ? C.blue + '15' : canRun ? '#0f1828' : tooExpensive ? C.red + '05' : '#0a1020',
-                  opacity: locked ? 0.4 : tooExpensive ? 0.55 : 1,
-                  transition: 'all 0.2s',
-                  textAlign: 'left',
-                  fontFamily: 'inherit',
-                  fontSize: 'inherit',
-                  color: 'inherit',
-                }}
-              >
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 3 }}>
-                  <span style={{ fontSize: 13, fontWeight: 600, color: '#e2e8f0' }}>
-                    {q.icon} {q.label}
+              let border, bg, animation = '';
+              if (revealed) {
+                border = isTreasure ? C.amber : isGuess ? C.red : C.border;
+                bg = isTreasure ? `linear-gradient(180deg, ${C.amber}2a, ${C.amber}0a)` : isGuess ? C.red + '18' : '#0a1020';
+                if (isTreasure) animation = 'treasureGlow 1.4s ease-in-out infinite';
+                else if (isGuess && !isTreasure) animation = 'wrongShake 0.5s ease-in-out';
+              } else if (peek) {
+                border = C.teal + '66';
+                bg = '#0f1828';
+              } else {
+                border = C.border;
+                bg = '#0a1020';
+              }
+
+              const clickable = (phase === 'peeking' && !peek && canAfford) || phase === 'guessing';
+              const hoverColor = phase === 'guessing' ? C.amber : C.teal;
+
+              return (
+                <button
+                  key={i}
+                  onClick={() => handleTile(i)}
+                  disabled={!clickable}
+                  style={{
+                    aspectRatio: '1 / 1',
+                    border: `2px solid ${border}`,
+                    borderRadius: 10,
+                    background: bg,
+                    cursor: clickable ? 'pointer' : 'default',
+                    fontFamily: 'inherit',
+                    color: '#e2e8f0',
+                    transition: 'border-color 0.2s, transform 0.15s, background 0.3s',
+                    animation,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    position: 'relative',
+                    overflow: 'hidden',
+                    padding: 0,
+                  }}
+                  onMouseEnter={e => { if (clickable) { e.currentTarget.style.transform = 'scale(1.05)'; e.currentTarget.style.borderColor = hoverColor; } }}
+                  onMouseLeave={e => { if (clickable) { e.currentTarget.style.transform = 'scale(1)'; e.currentTarget.style.borderColor = border; } }}
+                >
+                  {/* Tile content */}
+                  <span style={{
+                    filter: peek && !revealed ? `blur(${peek.blur}px)` : 'none',
+                    opacity: !peek && !revealed ? 0.35 : 1,
+                    fontSize: peek || revealed ? 28 : 22,
+                    color: !peek && !revealed ? C.mute : '#e2e8f0',
+                    transition: 'filter 0.3s',
+                    animation: (peek && !revealed) ? 'tilePop 0.35s ease both' : '',
+                    lineHeight: 1,
+                  }}>
+                    {peek || revealed ? tileEmoji(i) : '?'}
                   </span>
-                  <span className="mono" style={{ fontSize: 11, color: costColor, fontWeight: 700 }}>
-                    ε{q.cost}
-                  </span>
+
+                  {/* Eps tag on peeked tiles */}
+                  {peek && !revealed && (
+                    <span className="mono" style={{
+                      position: 'absolute',
+                      bottom: 3, right: 4,
+                      fontSize: 8.5,
+                      color: C.teal,
+                      fontWeight: 700,
+                      background: '#0a1020d0',
+                      padding: '1px 4px',
+                      borderRadius: 3,
+                      letterSpacing: '0.02em',
+                    }}>
+                      ε{p_eps(peek)}
+                    </span>
+                  )}
+
+                  {/* Wrong guess mark */}
+                  {revealed && isGuess && !isTreasure && (
+                    <span style={{
+                      position: 'absolute',
+                      top: '50%', left: '50%',
+                      transform: 'translate(-50%, -50%)',
+                      fontSize: 38,
+                      color: C.red,
+                      fontWeight: 900,
+                      textShadow: '0 0 10px #ef4444aa',
+                      pointerEvents: 'none',
+                    }}>
+                      ✕
+                    </span>
+                  )}
+
+                  {/* Star burst on treasure */}
+                  {revealed && isTreasure && (
+                    <span style={{
+                      position: 'absolute',
+                      top: 4, left: 4,
+                      fontSize: 12,
+                      animation: 'pulse 1.2s ease-in-out infinite',
+                      pointerEvents: 'none',
+                    }}>
+                      ✨
+                    </span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        </Card>
+
+        {/* Right column: controls + log */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+          {/* Slider / precision card */}
+          <Card style={{ padding: '14px 16px', opacity: phase === 'peeking' ? 1 : 0.55, transition: 'opacity 0.3s' }}>
+            <div className="mono" style={{ fontSize: 9, color: C.mute, letterSpacing: '0.08em', marginBottom: 10, fontWeight: 600 }}>
+              PEEK PRECISION
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 8 }}>
+              <span style={{ fontSize: 12, color: C.mute }}>ε per peek</span>
+              <span className="mono" style={{ fontSize: 22, fontWeight: 700, color: C.blue }}>{eps.toFixed(2)}</span>
+            </div>
+            <input
+              type="range" min="1" max="10" step="1"
+              value={sliderVal}
+              onChange={e => setSliderVal(+e.target.value)}
+              disabled={phase !== 'peeking'}
+              className="range-slider"
+              style={{ marginBottom: 6 }}
+            />
+            <div className="mono" style={{ display: 'flex', justifyContent: 'space-between', fontSize: 9.5, color: C.mute, marginBottom: 12 }}>
+              <span>blurry · cheap</span>
+              <span>clear · expensive</span>
+            </div>
+
+            <div style={{ display: 'flex', gap: 10, alignItems: 'center', padding: '9px 11px', borderRadius: 9, background: '#0a1020', border: `1px solid ${C.border}` }}>
+              <div style={{
+                width: 42, height: 42, borderRadius: 8,
+                border: `1.5px solid ${C.teal}66`,
+                background: '#0f1828',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontSize: 22, lineHeight: 1, flexShrink: 0,
+              }}>
+                <span style={{ filter: `blur(${blur}px)`, transition: 'filter 0.2s' }}>💎</span>
+              </div>
+              <div style={{ flex: 1, fontSize: 11, color: C.mute, lineHeight: 1.45 }}>
+                <div style={{ color: '#e2e8f0', fontWeight: 600, fontSize: 12.5, marginBottom: 2 }}>
+                  Next peek: <span className="mono" style={{ color: cost > 0.45 ? C.red : cost > 0.32 ? C.amber : C.green, fontWeight: 700 }}>ε{cost.toFixed(2)}</span>
                 </div>
-                <div style={{ fontSize: 11, color: C.mute, lineHeight: 1.45 }}>
-                  {q.desc} — sensitivity: {q.sens}
-                </div>
-                {tooExpensive && (
-                  <div className="mono" style={{ fontSize: 10, color: C.red, marginTop: 4 }}>insufficient budget</div>
-                )}
-                {isRunning && (
-                  <div className="mono" style={{ fontSize: 10, color: C.blue, marginTop: 4 }}>running…</div>
-                )}
-              </button>
-            );
-          })}
-          <div style={{ marginTop: 6 }}>
-            <Button onClick={reset} ghost small color={C.gray} fullWidth>↺ Reset budget</Button>
+                Blur {blur}px {!canAfford && phase === 'peeking' && <span style={{ color: C.red }}>· can't afford</span>}
+              </div>
+            </div>
+          </Card>
+
+          {/* Query log */}
+          <Card style={{ padding: '14px 16px', flex: 1 }}>
+            <div className="mono" style={{ fontSize: 9, color: C.mute, letterSpacing: '0.08em', marginBottom: 8, fontWeight: 600 }}>
+              QUERY LOG
+            </div>
+            {peeks.length === 0 ? (
+              <div style={{ fontSize: 12, color: C.mute, padding: '14px 4px', textAlign: 'center', fontStyle: 'italic' }}>
+                No peeks yet — start hunting
+              </div>
+            ) : (
+              <div style={{ maxHeight: 220, overflowY: 'auto', paddingRight: 4 }}>
+                {peeks.slice().reverse().map((p, i) => {
+                  const costCol = p.cost > 0.45 ? C.red : p.cost > 0.32 ? C.amber : C.green;
+                  const row = Math.floor(p.idx / GRID_COLS) + 1;
+                  const col = (p.idx % GRID_COLS) + 1;
+                  return (
+                    <div key={p.idx} className="slide-right" style={{
+                      display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                      padding: '7px 0',
+                      borderTop: i > 0 ? '1px solid #1e293b' : 'none',
+                      gap: 8,
+                    }}>
+                      <span className="mono" style={{ fontSize: 11, color: '#e2e8f0' }}>
+                        R{row}·C{col}
+                      </span>
+                      <span className="mono" style={{ fontSize: 10.5, color: C.teal }}>blur {p.blur}px</span>
+                      <span className="mono" style={{ fontSize: 10.5, color: costCol, fontWeight: 700 }}>−ε{p.cost.toFixed(2)}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </Card>
+
+          {/* Action buttons */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            {phase === 'peeking' && peeks.length > 0 && !outOfBudget && (
+              <Button onClick={readyToGuess} color={C.amber} small fullWidth>
+                🎯 I'm ready to guess
+              </Button>
+            )}
+            {(phase === 'revealed' || phase === 'guessing') && (
+              <Button onClick={reset} color={C.gray} ghost small fullWidth>
+                ↺ New hunt
+              </Button>
+            )}
           </div>
         </div>
       </div>
+
+      {/* Result & lesson card */}
+      {phase === 'revealed' && (
+        <Card className="fade-up" style={{
+          marginBottom: 14,
+          padding: '18px 20px',
+          background: `linear-gradient(180deg, ${(isWon ? C.green : C.red)}12, transparent)`,
+          border: `1px solid ${(isWon ? C.green : C.red)}55`,
+        }}>
+          <div className="mono" style={{ fontSize: 9, color: isWon ? C.green : C.red, letterSpacing: '0.1em', fontWeight: 700, marginBottom: 8 }}>
+            {isWon ? 'TREASURE RECOVERED' : 'WRONG TILE · BUDGET DID ITS JOB'}
+          </div>
+          <div style={{ fontSize: 15, color: '#e2e8f0', fontWeight: 600, marginBottom: 6 }}>
+            {isWon ? '🎉 You cracked it!' : '💥 The privacy budget protected the secret.'}
+          </div>
+          <div style={{ fontSize: 13, color: C.mute, lineHeight: 1.65, marginBottom: 10 }}>
+            You spent <span className="mono" style={{ color: C.amber, fontWeight: 700 }}>{(BUDGET_MAX - budget).toFixed(2)} ε</span> across <span className="mono" style={{ color: C.teal, fontWeight: 700 }}>{peeks.length}</span> peek{peeks.length === 1 ? '' : 's'}. {isWon
+              ? 'Careful calibration between blurry scouts and crisp confirmations paid off.'
+              : 'Without the budget cap, you could have run hundreds of peeks and averaged the noise away. The cap forced you to commit before that became possible.'
+            }
+          </div>
+          <div style={{
+            padding: '10px 12px',
+            borderRadius: 9,
+            background: C.blue + '10',
+            border: `1px solid ${C.blue}33`,
+            fontSize: 12.5, color: '#cbd5e1', lineHeight: 1.6,
+          }}>
+            <span style={{ color: C.blue, fontWeight: 700 }}>Why it matters: </span>
+            In a real DP system every query spends ε. Without a cap, an attacker repeats the same query 10,000 times and averages the noise away — defeating the whole protection. The budget expires before composition becomes dangerous.
+          </div>
+        </Card>
+      )}
 
       <NextButton onClick={onNext} label="Next: Company Case Studies →" />
     </div>
   );
 }
+
+// tiny helper for reading eps off a peek record (keeps the JSX above clean)
+function p_eps(peek) { return peek.eps.toFixed(2); }
 
 /* ═══════════════════════════════════════════════════════════════════
    MODULE 7 — COMPANY CASE STUDIES
