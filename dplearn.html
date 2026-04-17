@@ -1992,6 +1992,15 @@ function M3_CoinFlip({ onNext }) {
   const trueRateLive = simN > 0 ? simTrueY / simN : 0;
   const estimated = clamp(2 * rawRate - 0.5, 0, 1);
 
+  // Which branch of the preview table did the user actually land on?
+  const branch = coin1 === 'heads'
+    ? { label: 'truth', chance: '50%', color: C.green, detail: `the server got your real answer (${answer})` }
+    : coin2 === 'heads'
+      ? { label: 'random → YES', chance: '25%', color: C.amber, detail: 'the coin picked YES for you — your real answer is hidden' }
+      : coin2 === 'tails'
+        ? { label: 'random → NO', chance: '25%', color: C.amber, detail: 'the coin picked NO for you — your real answer is hidden' }
+        : null;
+
   const openAnalyst = () => {
     // Generate a fresh 500-person case study with a HIDDEN true rate
     const hiddenRate = 0.45; // "Have you ever copied someone else's work?"
@@ -2037,7 +2046,40 @@ function M3_CoinFlip({ onNext }) {
             <Button onClick={() => performFlip('YES')}>YES</Button>
             <Button onClick={() => performFlip('NO')} ghost>NO</Button>
           </div>
-          <p style={{ fontSize: 12, color: C.mute, marginTop: 22, lineHeight: 1.6 }}>
+
+          {/* Preview: what the server MIGHT receive, depending on the coin */}
+          <div style={{ maxWidth: 460, margin: '26px auto 0', textAlign: 'left' }}>
+            <div className="mono" style={{ fontSize: 9, color: C.mute, letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 8 }}>
+              Before you click — what the server <em style={{ fontStyle: 'italic' }}>might</em> receive
+            </div>
+            <div style={{ border: `1px solid ${C.mute}33`, borderRadius: 8, overflow: 'hidden' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1.3fr 0.6fr 1.4fr', fontSize: 10, background: C.mute + '14', color: C.mute, padding: '8px 12px', letterSpacing: '0.05em', textTransform: 'uppercase' }}>
+                <span>Coin outcome</span>
+                <span style={{ textAlign: 'center' }}>Chance</span>
+                <span>Server sees</span>
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1.3fr 0.6fr 1.4fr', fontSize: 12.5, padding: '11px 12px', borderTop: `1px solid ${C.mute}22`, color: '#cbd5e1', alignItems: 'center' }}>
+                <span>Heads on flip 1</span>
+                <span style={{ textAlign: 'center', color: C.green, fontWeight: 700 }}>50%</span>
+                <span>Your <strong style={{ color: '#e2e8f0' }}>true</strong> answer</span>
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1.3fr 0.6fr 1.4fr', fontSize: 12.5, padding: '11px 12px', borderTop: `1px solid ${C.mute}22`, color: '#cbd5e1', alignItems: 'center' }}>
+                <span>Tails → Heads</span>
+                <span style={{ textAlign: 'center', color: C.amber, fontWeight: 700 }}>25%</span>
+                <span><strong style={{ color: '#e2e8f0' }}>YES</strong> (random)</span>
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1.3fr 0.6fr 1.4fr', fontSize: 12.5, padding: '11px 12px', borderTop: `1px solid ${C.mute}22`, color: '#cbd5e1', alignItems: 'center' }}>
+                <span>Tails → Tails</span>
+                <span style={{ textAlign: 'center', color: C.amber, fontWeight: 700 }}>25%</span>
+                <span><strong style={{ color: '#e2e8f0' }}>NO</strong> (random)</span>
+              </div>
+            </div>
+            <p style={{ fontSize: 11, color: C.mute, marginTop: 8, lineHeight: 1.55, textAlign: 'center' }}>
+              You'll land on exactly one of these — and no one watching can tell which.
+            </p>
+          </div>
+
+          <p style={{ fontSize: 12, color: C.mute, marginTop: 18, lineHeight: 1.6 }}>
             Don't worry — it's an honest question and the protocol protects you either way.
           </p>
         </div>
@@ -2101,6 +2143,11 @@ function M3_CoinFlip({ onNext }) {
                   Server sees <strong style={{ color: '#e2e8f0' }}>{submitted}</strong> — cannot tell if that was your true answer or the coin's choice.
                 </p>
               </div>
+              {branch && (
+                <div style={{ marginTop: 14, paddingTop: 12, borderTop: `1px solid ${C.mute}22`, fontSize: 12.5, color: '#cbd5e1', lineHeight: 1.6 }}>
+                  You landed on the <strong style={{ color: branch.color }}>{branch.label}</strong> branch ({branch.chance} chance) — {branch.detail}.
+                </div>
+              )}
               <div style={{ marginTop: 14 }}>
                 <Button onClick={runSimulation}>See it at scale (300 people) →</Button>
               </div>
