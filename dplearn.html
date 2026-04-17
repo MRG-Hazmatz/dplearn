@@ -520,7 +520,7 @@ const TERMS = [
     example: 'A hospital publishes "average age of cancer patients" with DP. Even knowing every other patient\'s age, you still cannot determine any single patient\'s value.' },
   { id: 'eps', label: 'Epsilon (ε)', color: C.purple,
     def: 'The privacy dial. Small ε means strong privacy but noisier results. Large ε means more accurate results but weaker privacy. Real deployments use ε between 0.1 and 10.',
-    example: 'Apple uses ε=2 for iOS analytics. Google\'s COVID Mobility Reports used ε=0.44 per metric per day.' },
+    example: 'Apple uses ε=4 for emoji and Safari analytics, ε=2 for Health data, and ε=1 for Photos scene learning. Google\'s COVID Mobility Reports used ε=0.44 per metric per day.' },
   { id: 'delta', label: 'Delta (δ)', color: C.purple,
     def: 'A tiny probability that the strict ε guarantee might fail. Usually set to something like 0.000001. The guarantee holds with probability 1−δ.',
     example: '(ε=1, δ=0.00001): "With 99.999% probability, privacy loss is bounded by ε=1."' },
@@ -2472,7 +2472,7 @@ const HD_MAX = Math.max(...HOURLY_DATA.map(d => d.value)) * 1.6;
 
 const PRESETS = [
   { label: 'Google Mobility', eps: 0.44, color: '#4285f4' },
-  { label: 'Apple iOS',       eps: 2,    color: '#e85d5d' },
+  { label: 'Apple iOS',       eps: 4,    color: '#e85d5d' },
   { label: 'Sweet spot',      eps: 1,    color: C.green },
   { label: 'LinkedIn',        eps: 4,    color: '#0a66c2' },
 ];
@@ -3711,7 +3711,7 @@ const COMPANIES = [
     data: 'Emoji frequency, Health app types, Safari preferences, Photos scene types, Apple Intelligence prompts',
     threat: "Apple's own servers seeing raw user behavior — server breaches must reveal nothing",
     algo: 'Count Mean Sketch (CMS) + Hadamard CMS for frequency estimation at scale',
-    eps: 'ε=1–2 per datum; budget resets daily',
+    eps: 'ε=4 (emoji, Safari); ε=2 (Health); ε=8 (lookup hints); ε=1, δ=1.5×10⁻⁷ (Photos scenes) — budget resets daily per feature',
     outcome: 'Keyboard suggestions, Memories feature, Genmoji enhancement — all without Apple seeing individual behavior',
   },
   {

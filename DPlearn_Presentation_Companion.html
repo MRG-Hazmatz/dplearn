@@ -488,7 +488,8 @@
       Drag the epsilon slider slowly from left to right. Ask the audience to call out what they notice — the noise band widens as ε drops, and the curve becomes indistinguishable from the true data as ε rises. This is the fundamental trade-off made tangible.
     </div>
     <ul class="tip-list">
-      <li>At ε = 0.1: <em>"This is what Apple uses for some iOS signals. The curve is almost unrecognisable — but your individual answer is completely protected."</em></li>
+      <li>At ε = 1: <em>"Apple uses ε=1 for Photos scene learning — the tightest value in their published portfolio. Still noisy enough that you can't reconstruct any individual's behaviour."</em></li>
+      <li>At ε = 4: <em>"Apple's published value for emoji frequency and Safari analytics — their most commonly deployed setting from the 'Learning with Privacy at Scale' paper."</em></li>
       <li>At ε = 10: <em>"This is what the US Census used for some age tables in 2020. Accurate, but with detectable individual risk."</em></li>
       <li>Key takeaway: <em>"There is no free lunch. Every useful answer costs some privacy. DP lets you price that cost explicitly and honestly."</em></li>
     </ul>
@@ -703,7 +704,7 @@ Formula: p = 2(0.475) − 0.5 = <span class="result">0.45 ✓</span>
 
 <div class="callout callout-blue">
   <span class="label">Production epsilon values</span>
-  <strong>Apple</strong> uses ε = 1 (with δ = 1.5×10⁻⁷) for scene-learning models on-device via secure aggregation — one of the tightest publicly disclosed production epsilon values. ε = 4 is used for some Safari signals. <strong>Google's TensorFlow Privacy</strong> is the primary open-source DP-SGD framework. The <strong>US Census 2020</strong> used a global ε ≈ 19.61 across all published tables for 330 million respondents. A known limitation: DP-SGD degrades accuracy disproportionately for underrepresented demographic subgroups, because the noise required overwhelms sparse signal from minority populations — a fairness/privacy tension actively being researched.
+  <strong>Apple</strong> publishes a range of ε values by feature (privacy unit = user-day): ε=1 δ=1.5×10⁻⁷ for Photos iconic scenes (tightest), ε=2 for Health Type Usage, ε=4 for emoji frequency and Safari high-resource domain detection (most-cited from their "Learning with Privacy at Scale" paper), ε=8 for lookup hints and Safari energy/crashing domains, and ε=16 for QuickType suggestions and Safari autoplay detection. The wide range reflects that features with larger, noisier populations can tolerate higher ε while still obscuring individual behaviour. <strong>Google's TensorFlow Privacy</strong> is the primary open-source DP-SGD framework. The <strong>US Census 2020</strong> used a global ε ≈ 19.61 across all published tables for 330 million respondents. A known limitation: DP-SGD degrades accuracy disproportionately for underrepresented demographic subgroups, because the noise required overwhelms sparse signal from minority populations — a fairness/privacy tension actively being researched.
 </div>
 
 <div class="pull-quote">"A model trained with DP-SGD cannot memorise any individual record, by mathematical proof — not because the engineers were careful, but because the training algorithm makes it impossible for any single record to leave a distinguishable fingerprint in the weights."</div>
