@@ -2042,6 +2042,93 @@ function M3_CoinFlip({ onNext }) {
               "Have you ever called in sick when you weren't actually sick?"
             </p>
           </Card>
+
+          {/* Protocol flowchart — the two-coin decision tree, visualised */}
+          <div style={{ margin: '0 auto 26px', maxWidth: 720, textAlign: 'left' }}>
+            <div className="mono" style={{ fontSize: 9, color: C.mute, letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 10, textAlign: 'center' }}>
+              The protocol — visualised
+            </div>
+            <Card style={{ padding: '20px 14px', background: '#10131c' }}>
+              <svg viewBox="0 0 700 320" style={{ width: '100%', height: 'auto', display: 'block' }} role="img" aria-label="Two-coin randomized response flowchart">
+                <defs>
+                  <marker id="arr-m3" markerWidth="7" markerHeight="5" refX="6" refY="2.5" orient="auto">
+                    <polygon points="0 0, 7 2.5, 0 5" fill="#6b7280" />
+                  </marker>
+                </defs>
+
+                {/* Question box */}
+                <rect x="10" y="115" width="124" height="72" rx="7" fill="#0f1a2c" stroke="#60a5fa" strokeWidth="1.5"/>
+                <text textAnchor="middle" fontFamily="DM Sans, sans-serif" fontSize="10.5" fill="#bfdbfe">
+                  <tspan x="72" y="140">Have you ever</tspan>
+                  <tspan x="72" dy="15">called in sick</tspan>
+                  <tspan x="72" dy="15">when you weren't?</tspan>
+                </text>
+
+                {/* Arrow: question → flip1 */}
+                <line x1="134" y1="151" x2="157" y2="151" stroke="#6b7280" strokeWidth="1.5" markerEnd="url(#arr-m3)"/>
+
+                {/* Flip 1 box */}
+                <rect x="160" y="126" width="102" height="50" rx="7" fill="#24190a" stroke="#fbbf24" strokeWidth="1.5"/>
+                <text x="211" y="155" textAnchor="middle" fontFamily="DM Sans, sans-serif" fontSize="12" fontWeight="700" fill="#fbbf24">Flip a coin</text>
+
+                {/* Angled arrows from Flip1 — up to Heads1, down to Tails1 */}
+                <line x1="262" y1="134" x2="293" y2="62" stroke="#6b7280" strokeWidth="1.5" markerEnd="url(#arr-m3)"/>
+                <line x1="262" y1="168" x2="293" y2="243" stroke="#6b7280" strokeWidth="1.5" markerEnd="url(#arr-m3)"/>
+
+                {/* Heads 1 */}
+                <circle cx="322" cy="55" r="29" fill="#1f1506" stroke="#f59e0b" strokeWidth="1.5"/>
+                <text x="322" y="59" textAnchor="middle" fontFamily="DM Sans, sans-serif" fontSize="12" fontWeight="700" fill="#fbbf24">Heads</text>
+
+                {/* Arrow: Heads1 → Tell truth */}
+                <line x1="351" y1="55" x2="374" y2="55" stroke="#6b7280" strokeWidth="1.5" markerEnd="url(#arr-m3)"/>
+
+                {/* Tell the truth box */}
+                <rect x="377" y="28" width="116" height="54" rx="7" fill="#1a1d27" stroke="#94a3b8" strokeWidth="1.5"/>
+                <text textAnchor="middle" fontFamily="DM Sans, sans-serif" fontSize="12" fill="#e2e8f0">
+                  <tspan x="435" y="50">Tell the</tspan>
+                  <tspan x="435" dy="17">truth</tspan>
+                </text>
+
+                {/* Tails 1 */}
+                <circle cx="322" cy="251" r="29" fill="#140e28" stroke="#a78bfa" strokeWidth="1.5"/>
+                <text x="322" y="255" textAnchor="middle" fontFamily="DM Sans, sans-serif" fontSize="12" fontWeight="700" fill="#a78bfa">Tails</text>
+
+                {/* Arrow: Tails1 → Flip2 */}
+                <line x1="351" y1="251" x2="374" y2="251" stroke="#6b7280" strokeWidth="1.5" markerEnd="url(#arr-m3)"/>
+
+                {/* Flip 2 box */}
+                <rect x="377" y="226" width="102" height="50" rx="7" fill="#24190a" stroke="#fbbf24" strokeWidth="1.5"/>
+                <text x="428" y="255" textAnchor="middle" fontFamily="DM Sans, sans-serif" fontSize="12" fontWeight="700" fill="#fbbf24">Flip a coin</text>
+
+                {/* Angled arrows from Flip2 — up to Heads2, down to Tails2 */}
+                <line x1="479" y1="234" x2="510" y2="180" stroke="#6b7280" strokeWidth="1.5" markerEnd="url(#arr-m3)"/>
+                <line x1="479" y1="268" x2="510" y2="284" stroke="#6b7280" strokeWidth="1.5" markerEnd="url(#arr-m3)"/>
+
+                {/* Heads 2 */}
+                <circle cx="538" cy="170" r="27" fill="#1f1506" stroke="#f59e0b" strokeWidth="1.5"/>
+                <text x="538" y="174" textAnchor="middle" fontFamily="DM Sans, sans-serif" fontSize="12" fontWeight="700" fill="#fbbf24">Heads</text>
+
+                {/* Arrow: Heads2 → Say YES */}
+                <line x1="565" y1="170" x2="590" y2="170" stroke="#6b7280" strokeWidth="1.5" markerEnd="url(#arr-m3)"/>
+
+                {/* Say YES box */}
+                <rect x="593" y="147" width="97" height="46" rx="7" fill="#0c2318" stroke="#4ade80" strokeWidth="1.5"/>
+                <text x="641" y="174" textAnchor="middle" fontFamily="DM Sans, sans-serif" fontSize="13" fontWeight="700" fill="#4ade80">Say "YES"</text>
+
+                {/* Tails 2 */}
+                <circle cx="538" cy="290" r="26" fill="#140e28" stroke="#a78bfa" strokeWidth="1.5"/>
+                <text x="538" y="294" textAnchor="middle" fontFamily="DM Sans, sans-serif" fontSize="12" fontWeight="700" fill="#a78bfa">Tails</text>
+
+                {/* Arrow: Tails2 → Say NO */}
+                <line x1="564" y1="290" x2="590" y2="290" stroke="#6b7280" strokeWidth="1.5" markerEnd="url(#arr-m3)"/>
+
+                {/* Say NO box */}
+                <rect x="593" y="267" width="97" height="46" rx="7" fill="#2a0d0d" stroke="#f87171" strokeWidth="1.5"/>
+                <text x="641" y="294" textAnchor="middle" fontFamily="DM Sans, sans-serif" fontSize="13" fontWeight="700" fill="#f87171">Say "NO"</text>
+              </svg>
+            </Card>
+          </div>
+
           <div style={{ display: 'flex', gap: 14, justifyContent: 'center' }}>
             <Button onClick={() => performFlip('YES')}>YES</Button>
             <Button onClick={() => performFlip('NO')} ghost>NO</Button>
