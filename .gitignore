@@ -1,15 +1,44 @@
-# Claude Code config (dev-only, not needed for the app)
+# ──────────────────────────────────────────────────────────────
+#  DPlearn — .gitignore
+#  The whole course ships as a single HTML file; this keeps the
+#  tree clean of dev tooling, editor junk, and OS metadata.
+# ──────────────────────────────────────────────────────────────
+
+# Claude Code / local agent config (dev-only, never deployed)
 .claude/
 
-# OS junk
-.DS_Store
-Thumbs.db
-desktop.ini
+# Editor / IDE folders
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
 
-# Editor files
+# Editor swap & backup files
 *.swp
 *.swo
 *~
+*.bak
 
-# Original reference file
-dplearn_v6_original.html
+# Environment / secrets (none shipped, but guard anyway)
+.env
+.env.*
+
+# Dependency folders (none used, but guard anyway)
+node_modules/
+
+# Log files
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# OS metadata
+.DS_Store
+Thumbs.db
+desktop.ini
+ehthumbs.db
+
+# Local drafts, backups, and reference copies
+drafts/
+*_draft.html
+*_original.html

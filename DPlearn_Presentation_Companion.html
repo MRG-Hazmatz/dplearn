@@ -468,9 +468,11 @@
     <div class="module-title">Randomized Response — The Coin Flip Protocol</div>
     <div class="module-dur">⏱ 8–10 MIN · FORMULA PAYOFF</div>
     <div class="module-desc">
-      This is the module where the audience first touches <em>real</em> differential privacy. Start by answering the sensitive survey question yourself, live, so the audience sees exactly what the protocol does. Then scale to 300 people and show the dual live graphs — "what people really answered" vs "what the server sees." Finally, run the 500-student Case Study Challenge.
+      This is the module where the audience first touches <em>real</em> differential privacy. Start on the question screen — the <strong>protocol flowchart</strong> maps out both branches of the two-coin decision tree, and the probability table beneath it quantifies them (50% truth / 25% random YES / 25% random NO) <em>before</em> you click. Answer the question yourself, watch the coins resolve, and read the branch-reveal line on the result card ("You landed on the <em>truth</em> branch — 50% chance"). Then scale to 300 people to show the dual live graphs — "what people really answered" vs "what the server sees" — and finally run the 500-student Case Study Challenge.
     </div>
     <ul class="tip-list">
+      <li>Walk through the flowchart first: <em>"Every one of you is about to trace exactly one path through this tree. But because the coins are private, no one watching can tell which one."</em></li>
+      <li>Tie the preview table back after the flip: <em>"See — I landed on the 25% random-YES branch. The server now thinks I called in sick when I shouldn't have, but neither of us actually knows whether I did."</em></li>
       <li>Before running the Case Study, say: <em>"We're going to estimate a hidden truth using nothing but scrambled data and a formula. That formula — two lines of algebra — is at the heart of Local Differential Privacy."</em></li>
       <li>After the reveal, derive the formula live on a whiteboard or slide — see Section 2 of this document for the step-by-step derivation.</li>
       <li>Reinforce: <em>"The server never learns your answer. But at scale, the population rate is recoverable within a few percentage points."</em></li>
